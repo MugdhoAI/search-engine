@@ -27,11 +27,11 @@ class JsonStore:
             raise FileNotFoundError(f"stored documents do not exist: {source}") from exc
 
         if not isinstance(payload, list):
-            raise ValueError("stored documents must be a list")
+            raise TypeError("stored documents must be a list")
 
         engine = SearchEngine()
         for item in payload:
             if not isinstance(item, dict):
-                raise ValueError("each stored document must be an object")
+                raise TypeError("each stored document must be an object")
             engine.add(int(item["document_id"]), str(item["text"]), item.get("metadata"))
         return engine

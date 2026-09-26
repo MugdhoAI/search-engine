@@ -1,0 +1,18 @@
+[
+  {
+    "document_id": 1,
+    "text": "Python is a programming language designed for readable software."
+  },
+  {
+    "document_id": 2,
+    "text": "An inverted index makes document retrieval efficient."
+  },
+  {
+    "document_id": 3,
+    "text": "Search engines rank documents by relevance."
+  },
+  {
+    "document_id": 4,
+    "text": "Python can be used to build search systems."
+  }
+]

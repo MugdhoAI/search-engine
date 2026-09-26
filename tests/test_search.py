@@ -40,6 +40,21 @@ def test_lowercase_or_is_supported(engine: SearchEngine) -> None:
     assert {r.document_id for r in engine.search("python or language")} == {1, 2, 3}
 
 
+def test_phrase_query_requires_adjacent_terms(engine: SearchEngine) -> None:
+    results = engine.search('"search engine"')
+    assert [r.document_id for r in results] == [2]
+
+
+def test_phrase_query_can_be_combined_with_terms(engine: SearchEngine) -> None:
+    results = engine.search('"programming language" python')
+    assert [r.document_id for r in results] == [1]
+
+
+def test_unmatched_quote_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        QueryParser().parse('"python search')
+
+
 def test_empty_query_returns_no_results(engine: SearchEngine) -> None:
     assert engine.search("") == []
 

@@ -23,5 +23,5 @@ def test_invalid_stored_shape_is_rejected(tmp_path: Path) -> None:
     path = tmp_path / "bad.json"
     path.write_text("{}", encoding="utf-8")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         JsonStore().load(path)

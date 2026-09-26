@@ -1,6 +1,6 @@
+import re
 from dataclasses import dataclass
 from enum import Enum
-import re
 
 from .index import InvertedIndex
 from .tokenizer import Tokenizer

@@ -38,7 +38,6 @@ class QueryParser:
         if has_and and has_or:
             raise ValueError("mixing AND and OR is not supported")
 
-        mode = QueryMode.ALL if has_and else QueryMode.ANY
         phrases = tuple(
             tuple(self.tokenizer.tokenize(match.group(1)))
             for match in self._PHRASE_PATTERN.finditer(raw_query)
@@ -46,9 +45,10 @@ class QueryParser:
         cleaned = self._PHRASE_PATTERN.sub(" ", raw_query)
         cleaned = re.sub(r"\b(?:AND|OR)\b", " ", cleaned, flags=re.IGNORECASE)
         terms = tuple(dict.fromkeys(self.tokenizer.normalize_query(cleaned)))
-
         phrase_terms = tuple(term for phrase in phrases for term in phrase)
         all_terms = tuple(dict.fromkeys((*terms, *phrase_terms)))
+
+        mode = QueryMode.ALL if has_and or (phrases and terms and not has_or) else QueryMode.ANY
         return Query(terms=all_terms, mode=mode, phrases=phrases)
 
     def candidates(self, query: Query, index: InvertedIndex) -> set[int]:

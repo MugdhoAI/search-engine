@@ -59,8 +59,14 @@ def test_empty_query_returns_no_results(engine: SearchEngine) -> None:
     assert engine.search("") == []
 
 
+@pytest.mark.parametrize("limit", [True, 1.5, "2", None])
+def test_limit_must_be_an_integer(engine: SearchEngine, limit: object) -> None:
+    with pytest.raises(TypeError, match="limit must be an integer"):
+        engine.search("python", limit)  # type: ignore[arg-type]
+
+
 def test_limit_must_be_positive(engine: SearchEngine) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="limit must be positive"):
         engine.search("python", 0)
 
 

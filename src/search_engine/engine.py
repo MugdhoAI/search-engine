@@ -27,6 +27,8 @@ class SearchEngine:
         self.index.add_many(documents)
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise TypeError("limit must be an integer")
         if limit < 1:
             raise ValueError("limit must be positive")
 

@@ -19,6 +19,23 @@ def test_duplicate_document_ids_are_rejected() -> None:
         index.add(Document(1, "second"))
 
 
+@pytest.mark.parametrize("document_id", [True, 1.5, "1"])
+def test_document_rejects_non_integer_ids(document_id: object) -> None:
+    with pytest.raises(TypeError, match="document_id must be an integer"):
+        Document(document_id, "text")  # type: ignore[arg-type]
+
+
+def test_document_rejects_non_string_text() -> None:
+    with pytest.raises(TypeError, match="text must be a string"):
+        Document(1, None)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("metadata", [{"source": 1}, ["source"], "source"])
+def test_document_rejects_invalid_metadata(metadata: object) -> None:
+    with pytest.raises(TypeError, match="metadata must be a mapping of strings to strings"):
+        Document(1, "text", metadata)  # type: ignore[arg-type]
+
+
 def test_document_length_counts_searchable_terms() -> None:
     index = InvertedIndex()
     index.add(Document(1, "the quick fox"))

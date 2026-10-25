@@ -69,6 +69,12 @@ def test_or_query_can_combine_terms_with_a_phrase(engine: SearchEngine) -> None:
     assert {result.document_id for result in results} == {1, 2, 3}
 
 
+def test_boolean_words_inside_phrases_are_not_operators() -> None:
+    query = QueryParser().parse('"python AND search OR engine"')
+    assert query.phrases == (("python", "search", "engine"),)
+    assert not query.has_or
+
+
 def test_mixed_boolean_operators_are_rejected() -> None:
     with pytest.raises(ValueError):
         QueryParser().parse("python AND search OR engine")

@@ -44,7 +44,7 @@ python OR language
 - JSON persistence that rebuilds the index from source documents
 - Command line interface
 - Unit, persistence, query, ranking, and CLI integration tests
-- Continuous integration on Python 3.11, 3.12, and 3.13
+- Continuous integration on Python 3.11, 3.12, 3.13, and 3.14
 
 ## Quick start
 
@@ -138,7 +138,7 @@ Results are sorted by descending score and then ascending document ID. Deduplica
 
 The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, and the CLI workflow.
 
-CI installs the package, runs pytest, and checks the source and tests with Ruff on Python 3.11, 3.12, and 3.13.
+CI installs the package, runs pytest, and checks the source and tests with Ruff on Python 3.11, 3.12, 3.13, and 3.14.
 
 ## Scope and limitations
 

@@ -1,28 +1,27 @@
 # Search Engine
 
-A lightweight search engine built from scratch in Python.
+[![CI](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml)
 
-This project implements the core retrieval pipeline without relying on an external search engine library. It is intentionally small enough to inspect from input documents to ranked results.
+A small search engine built from scratch in Python. It demonstrates the core information retrieval pipeline: tokenization, inverted indexing, Boolean and phrase queries, TF IDF ranking, and JSON document storage.
+
+The implementation is intentionally compact enough to follow from source documents to ranked results without relying on an external search engine library.
 
 ## What it does
 
-The search pipeline is:
-
-```text
-Documents
-   ↓
-Tokenization
-   ↓
-Inverted index
-   ↓
-Query parsing
-   ↓
-TF IDF ranking
-   ↓
-Results
+```mermaid
+flowchart LR
+    A[JSON document collection] --> B[Document store]
+    B --> C[Tokenizer]
+    C --> D[Inverted index]
+    E[Search query] --> F[Query parser]
+    F --> G[Candidate selection]
+    D --> G
+    G --> H[TF IDF ranker]
+    D --> H
+    H --> I[Ranked results]
 ```
 
-An inverted index lets a query jump directly to documents containing its terms instead of scanning the entire collection every time.
+An inverted index maps each term to the documents that contain it, along with its term frequency. This avoids scanning every document just to find candidate matches.
 
 The included corpus supports queries such as:
 
@@ -33,91 +32,119 @@ python OR language
 "search systems"
 ```
 
-Results are ranked with TF IDF so terms that are more representative of a document contribute more to its score.
-
 ## Features
 
-* Text tokenization and normalization
-* Stop word filtering
-* Inverted index with term frequencies
-* AND and OR queries
-* Quoted phrase queries
-* TF IDF relevance scoring
-* Deterministic result ordering
-* JSON persistence
-* Command line search
-* Unit and integration tests
-* Continuous integration
+- Text tokenization and normalization
+- Stop word filtering
+- Inverted index with term frequencies and document lengths
+- AND and OR queries
+- Quoted phrase queries
+- TF IDF relevance scoring
+- Deterministic result ordering
+- JSON persistence that rebuilds the index from source documents
+- Command line interface
+- Unit, persistence, query, ranking, and CLI integration tests
+- Continuous integration on Python 3.11, 3.12, and 3.13
 
 ## Quick start
 
-Create an environment and install the project with development dependencies:
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
+```
+
+Activate it using the command for your shell.
+
+macOS or Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the project and development tools:
+
+```bash
 python -m pip install -e ".[dev]"
 ```
 
-Run the tests:
+Run the test suite and lint check:
 
 ```bash
-pytest
+python -m pytest
+python -m ruff check src tests
 ```
 
-Search the example collection:
+Search the included collection:
 
 ```bash
 search-engine examples/documents.json "python"
 ```
 
-You can also run the module directly:
+Example output:
+
+```text
+0.251804    1    Python is a programming language designed for readable software.
+0.251804    4    Python can be used to build search systems.
+```
+
+The columns are score, document ID, and document text. Equal scores are ordered by ascending document ID. You can also run the CLI as a module:
 
 ```bash
 python -m search_engine.cli examples/documents.json "python AND search"
 ```
 
+## Query behavior
+
+- Bare terms use OR semantics by default.
+- `AND` requires all query terms to match; `OR` accepts matches from either side.
+- Mixing `AND` and `OR` in the same query is rejected.
+- Quoted phrases must appear as adjacent tokens after tokenization and stop word filtering.
+- A phrase combined with unquoted terms uses AND semantics unless you explicitly use `OR`.
+
+Phrase matching filters candidate documents. Results are ranked using the query terms, not phrase proximity or a learned relevance model.
+
 ## Architecture
 
-The main components are deliberately small:
+The modules have distinct responsibilities:
 
-* `document.py` defines the immutable document model.
-* `tokenizer.py` converts text into normalized searchable terms.
-* `index.py` builds the inverted index and stores term frequencies.
-* `query.py` parses Boolean and phrase queries.
-* `ranking.py` calculates TF IDF scores and produces deterministic rankings.
-* `engine.py` provides the public search API.
-* `storage.py` persists source documents to JSON and rebuilds the index.
-* `cli.py` exposes the engine from the command line.
+- `document.py` defines the document record and validates its fields.
+- `tokenizer.py` normalizes text into searchable terms and removes stop words.
+- `index.py` builds the inverted index and stores term frequencies and document lengths.
+- `query.py` parses Boolean and phrase queries and selects candidate documents.
+- `ranking.py` calculates TF IDF scores and orders results deterministically.
+- `engine.py` coordinates indexing, querying, and ranking through the public API.
+- `storage.py` persists source documents as JSON and rebuilds the index when loading.
+- `cli.py` exposes search through the command line.
 
-The retrieval structures use Python dictionaries and sets so the core behavior remains visible instead of being hidden behind a search framework.
+The implementation uses Python dictionaries and sets so the retrieval structures remain visible rather than hidden behind a search framework.
 
-The index keeps source documents separate from postings. The ranker uses normalized term frequency and smoothed inverse document frequency. Query terms are deduplicated before scoring so repeated words do not artificially inflate relevance.
+For each unique query term present in a document, the ranker adds:
+
+```text
+(term frequency / searchable document length)
+    * (log((number of documents + 1) / (document frequency + 1)) + 1)
+```
+
+Results are sorted by descending score and then ascending document ID. Deduplicating query terms prevents repeated words from artificially increasing a document's score.
 
 ## Validation
 
-The test suite covers:
+The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, and the CLI workflow.
 
-* Tokenization and normalization
-* Index construction
-* Duplicate IDs
-* Document lengths
-* Ranked retrieval
-* Boolean queries
-* Phrase queries
-* Empty queries
-* Invalid input
-* Persistence
-* Deterministic ordering
-* Repeated query terms
-* CLI parsing
+CI installs the package, runs pytest, and checks the source and tests with Ruff on Python 3.11, 3.12, and 3.13.
 
-CI runs the tests on Python 3.11, 3.12, and 3.13 and checks the source with Ruff.
+## Scope and limitations
 
-## Scope
+This is an educational search engine, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance.
 
-This is an educational search engine, not a replacement for Lucene or Elasticsearch. The project stays deliberately small so the full retrieval process can be understood end to end.
-
-Future work can extend the same foundation with better text normalization, persistent postings, benchmarks, and larger corpus experiments.
+Potential extensions include broader Unicode-aware tokenization, positional postings, reproducible benchmarks on a defined corpus, and experiments with larger collections.
 
 ## License
 

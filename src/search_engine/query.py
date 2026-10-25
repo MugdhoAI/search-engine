@@ -35,8 +35,9 @@ class QueryParser:
         if raw_query.count('"') % 2:
             raise ValueError("unmatched quote in query")
 
-        has_and = bool(re.search(r"\bAND\b", raw_query, re.IGNORECASE))
-        has_or = bool(re.search(r"\bOR\b", raw_query, re.IGNORECASE))
+        unquoted_query = self._PHRASE_PATTERN.sub(" ", raw_query)
+        has_and = bool(re.search(r"\bAND\b", unquoted_query, re.IGNORECASE))
+        has_or = bool(re.search(r"\bOR\b", unquoted_query, re.IGNORECASE))
         if has_and and has_or:
             raise ValueError("mixing AND and OR is not supported")
 

@@ -64,6 +64,11 @@ def test_limit_must_be_positive(engine: SearchEngine) -> None:
         engine.search("python", 0)
 
 
+def test_or_query_can_combine_terms_with_a_phrase(engine: SearchEngine) -> None:
+    results = engine.search('language OR "search engine"')
+    assert {result.document_id for result in results} == {1, 2, 3}
+
+
 def test_mixed_boolean_operators_are_rejected() -> None:
     with pytest.raises(ValueError):
         QueryParser().parse("python AND search OR engine")

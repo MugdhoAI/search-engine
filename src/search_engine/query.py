@@ -16,6 +16,8 @@ class Query:
     terms: tuple[str, ...]
     mode: QueryMode = QueryMode.ANY
     phrases: tuple[tuple[str, ...], ...] = ()
+    unquoted_terms: tuple[str, ...] = ()
+    has_or: bool = False
 
 
 class QueryParser:
@@ -44,16 +46,39 @@ class QueryParser:
         )
         cleaned = self._PHRASE_PATTERN.sub(" ", raw_query)
         cleaned = re.sub(r"\b(?:AND|OR)\b", " ", cleaned, flags=re.IGNORECASE)
-        terms = tuple(dict.fromkeys(self.tokenizer.normalize_query(cleaned)))
+        unquoted_terms = tuple(dict.fromkeys(self.tokenizer.normalize_query(cleaned)))
         phrase_terms = tuple(term for phrase in phrases for term in phrase)
-        all_terms = tuple(dict.fromkeys((*terms, *phrase_terms)))
+        all_terms = tuple(dict.fromkeys((*unquoted_terms, *phrase_terms)))
 
-        mode = QueryMode.ALL if has_and or (phrases and terms and not has_or) else QueryMode.ANY
-        return Query(terms=all_terms, mode=mode, phrases=phrases)
+        mode = QueryMode.ALL if has_and or (phrases and unquoted_terms and not has_or) else QueryMode.ANY
+        return Query(
+            terms=all_terms,
+            mode=mode,
+            phrases=phrases,
+            unquoted_terms=unquoted_terms,
+            has_or=has_or,
+        )
 
     def candidates(self, query: Query, index: InvertedIndex) -> set[int]:
         if not query.terms:
             return set()
+
+        if query.has_or and query.phrases:
+            candidates: set[int] = set()
+            for term in query.unquoted_terms:
+                candidates.update(index.postings(term))
+
+            for phrase in query.phrases:
+                if phrase:
+                    candidates.update(
+                        document.document_id
+                        for document in index.documents()
+                        if self._contains_phrase(
+                            self.tokenizer.tokenize(document.text),
+                            phrase,
+                        )
+                    )
+            return candidates
 
         posting_sets = [set(index.postings(term)) for term in query.terms]
         if query.mode is QueryMode.ALL:

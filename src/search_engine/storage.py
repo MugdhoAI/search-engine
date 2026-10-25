@@ -33,5 +33,16 @@ class JsonStore:
         for item in payload:
             if not isinstance(item, dict):
                 raise TypeError("each stored document must be an object")
-            engine.add(int(item["document_id"]), str(item["text"]), item.get("metadata"))
+
+            document_id = item.get("document_id")
+            text = item.get("text")
+            metadata = item.get("metadata", {})
+            if isinstance(document_id, bool) or not isinstance(document_id, int):
+                raise TypeError("stored document_id must be an integer")
+            if not isinstance(text, str):
+                raise TypeError("stored document text must be a string")
+            if metadata is not None and not isinstance(metadata, dict):
+                raise TypeError("stored document metadata must be an object or null")
+
+            engine.add(document_id, text, metadata)
         return engine

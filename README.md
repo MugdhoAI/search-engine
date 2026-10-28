@@ -1,5 +1,9 @@
 # Search Engine
 
+<p align="center">
+  <img src="assets/search-engine-hero.svg" alt="Search Engine: an information retrieval pipeline from documents and inverted index to ranked search results" width="100%" />
+</p>
+
 [![CI](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml)
 
 A small search engine built from scratch in Python. It demonstrates the core information retrieval pipeline: tokenization, inverted indexing, Boolean and phrase queries, TF IDF ranking, and JSON document storage.

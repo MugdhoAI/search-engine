@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#080E18"/><stop offset="1" stop-color="#0C1725"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="80" y1="0" x2="700" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#58D5F7"/><stop offset="1" stop-color="#478BFF"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#101F30"/><stop offset="1" stop-color="#0B1421"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" stroke="#24405A" stroke-opacity=".28" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="520" rx="20" fill="url(#bg)"/>
+  <rect width="1600" height="520" rx="20" fill="url(#grid)"/>
+  <rect x="1" y="1" width="1598" height="518" rx="19" stroke="#31465D" stroke-opacity=".8"/>
+  <circle cx="1190" cy="240" r="245" fill="#123A60" fill-opacity=".16"/>
+  <circle cx="1190" cy="240" r="180" stroke="#2B6D9A" stroke-opacity=".18"/>
+  <circle cx="1190" cy="240" r="125" stroke="#2B6D9A" stroke-opacity=".24"/>
+  <path d="M68 84H420" stroke="url(#accent)" stroke-width="3"/>
+  <text x="68" y="132" fill="#70D9FA" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="19" font-weight="600" letter-spacing="5">INFORMATION RETRIEVAL · PYTHON</text>
+  <text x="62" y="230" fill="#F3F7FC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="82" font-weight="750" letter-spacing="-3">Search</text>
+  <text x="62" y="318" fill="url(#accent)" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="82" font-weight="750" letter-spacing="-3">Engine</text>
+  <text x="68" y="370" fill="#D1DCE9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="23">From raw text to ranked results.</text>
+  <text x="68" y="407" fill="#8EA5BC" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" letter-spacing="1.1">TOKENIZE  /  INDEX  /  QUERY  /  RANK</text>
+  <g opacity=".8" stroke="#3F91C5" stroke-width="1.5">
+    <path d="M660 160H760V122H840"/><path d="M660 220H760V250H840"/><path d="M660 280H760V378H840"/>
+    <path d="M1010 122H1075V160H1138"/><path d="M1010 250H1075V250H1138"/><path d="M1010 378H1075V342H1138"/>
+    <path d="M1270 160H1320V203H1370"/><path d="M1270 250H1370"/><path d="M1270 342H1320V300H1370"/>
+  </g>
+  <g fill="#0D1B2A" stroke="#347CA8" stroke-width="1.5">
+    <rect x="520" y="130" width="140" height="60" rx="8"/>
+    <rect x="520" y="200" width="140" height="60" rx="8"/>
+    <rect x="520" y="270" width="140" height="60" rx="8"/>
+    <rect x="840" y="92" width="170" height="60" rx="8"/>
+    <rect x="840" y="220" width="170" height="60" rx="8"/>
+    <rect x="840" y="348" width="170" height="60" rx="8"/>
+    <rect x="1138" y="130" width="132" height="60" rx="8"/>
+    <rect x="1138" y="220" width="132" height="60" rx="8"/>
+    <rect x="1138" y="312" width="132" height="60" rx="8"/>
+  </g>
+  <g fill="#9EB4CA" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13">
+    <text x="537" y="154">DOC 001</text><text x="537" y="174" fill="#6FCBF1">source text</text>
+    <text x="537" y="224">DOC 002</text><text x="537" y="244" fill="#6FCBF1">source text</text>
+    <text x="537" y="294">DOC 003</text><text x="537" y="314" fill="#6FCBF1">source text</text>
+    <text x="860" y="116">INVERTED</text><text x="860" y="136" fill="#68D3F5">INDEX</text>
+    <text x="860" y="244">QUERY</text><text x="860" y="264" fill="#68D3F5">CANDIDATES</text>
+    <text x="860" y="372">TF · IDF</text><text x="860" y="392" fill="#68D3F5">RANKING</text>
+    <text x="1155" y="154">term → docs</text><text x="1155" y="174" fill="#68D3F5">postings</text>
+    <text x="1155" y="244">AND / OR</text><text x="1155" y="264" fill="#68D3F5">phrases</text>
+    <text x="1155" y="336">SCORES</text><text x="1155" y="356" fill="#68D3F5">sorted</text>
+  </g>
+  <g transform="translate(1370 176)">
+    <rect width="170" height="150" rx="12" fill="url(#panel)" stroke="#478BFF" stroke-opacity=".8"/>
+    <text x="18" y="28" fill="#A9C3DA" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="12" letter-spacing="1">TOP RESULTS</text>
+    <g fill="#E7F1FC">
+      <rect x="18" y="45" width="98" height="5" rx="2.5"/><rect x="18" y="75" width="78" height="5" rx="2.5"/><rect x="18" y="105" width="60" height="5" rx="2.5"/>
+    </g>
+    <g fill="#53C7F3">
+      <rect x="18" y="56" width="132" height="3" rx="1.5" opacity=".65"/><rect x="18" y="86" width="112" height="3" rx="1.5" opacity=".55"/><rect x="18" y="116" width="88" height="3" rx="1.5" opacity=".45"/>
+    </g>
+    <g fill="#83A1BD" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="11">
+      <text x="18" y="69">0.82</text><text x="18" y="99">0.67</text><text x="18" y="129">0.51</text>
+    </g>
+  </g>
+  <text x="68" y="474" fill="#6F879F" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" letter-spacing="2">INVERTED INDEX  ·  BOOLEAN SEARCH  ·  TF-IDF  ·  JSON PERSISTENCE</text>
+  <path d="M68 492H1532" stroke="#31465D" stroke-opacity=".7"/>
+</svg>

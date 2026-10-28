@@ -1,20 +1,40 @@
-# Search Engine
-
 <p align="center">
-  <img src="assets/search-engine-hero.svg" alt="Search Engine: an information retrieval pipeline from documents and inverted index to ranked search results" width="100%" />
+  <img src="assets/search-engine-hero.svg" alt="Search Engine: an information retrieval pipeline from source documents through an inverted index to ranked results" width="100%">
 </p>
 
-[![CI](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml)
+<h1 align="center">MugdhoAI / <a href="https://github.com/MugdhoAI/search-engine">search-engine</a></h1>
 
-A small search engine built from scratch in Python. It demonstrates the core information retrieval pipeline: tokenization, inverted indexing, Boolean and phrase queries, TF IDF ranking, and JSON document storage.
+<p align="center">
+  <a href="https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml"><img src="https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/MugdhoAI/search-engine/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/release-v0.1.0-blue" alt="Release v0.1.0"></a>
+  <a href="https://github.com/MugdhoAI/search-engine/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-3776AB?logo=python&logoColor=white" alt="Python 3.11, 3.12, 3.13, and 3.14">
+</p>
 
-The implementation is intentionally compact enough to follow from source documents to ranked results without relying on an external search engine library.
+<p align="center">
+  <strong>From raw text to ranked results.</strong><br>
+  A small Python search engine that makes the core information retrieval pipeline visible: tokenization, inverted indexing, query processing, TF IDF ranking, and JSON persistence.
+</p>
 
-## What it does
+<table>
+  <tr>
+    <td align="center" width="20%"><strong>Indexing</strong><br><sub>Tokenization and term frequencies</sub></td>
+    <td align="center" width="20%"><strong>Inverted Index</strong><br><sub>Term to document postings</sub></td>
+    <td align="center" width="20%"><strong>Query Support</strong><br><sub>AND, OR, quoted phrases</sub></td>
+    <td align="center" width="20%"><strong>Ranking</strong><br><sub>TF IDF and deterministic order</sub></td>
+    <td align="center" width="20%"><strong>Storage and CLI</strong><br><sub>JSON persistence and terminal search</sub></td>
+  </tr>
+</table>
+
+## Why this project exists
+
+Search engines combine several steps that are easy to hide behind a library: converting text into terms, finding candidate documents efficiently, interpreting a query, and ordering results by relevance. This project keeps those steps small and inspectable so the retrieval process can be understood and tested end to end.
+
+## Search pipeline
 
 ```mermaid
 flowchart LR
-    A[JSON document collection] --> B[Document store]
+    A[JSON document collection] --> B[Document model]
     B --> C[Tokenizer]
     C --> D[Inverted index]
     E[Search query] --> F[Query parser]
@@ -27,7 +47,7 @@ flowchart LR
 
 An inverted index maps each term to the documents that contain it, along with its term frequency. This avoids scanning every document just to find candidate matches.
 
-The included corpus supports queries such as:
+Example queries against the included collection:
 
 ```text
 python
@@ -35,20 +55,6 @@ python AND search
 python OR language
 "search systems"
 ```
-
-## Features
-
-- Text tokenization and normalization
-- Stop word filtering
-- Inverted index with term frequencies and document lengths
-- AND and OR queries
-- Quoted phrase queries
-- TF IDF relevance scoring
-- Deterministic result ordering
-- JSON persistence that rebuilds the index from source documents
-- Command line interface
-- Unit, persistence, query, ranking, and CLI integration tests
-- Continuous integration on Python 3.11, 3.12, 3.13, and 3.14
 
 ## Quick start
 

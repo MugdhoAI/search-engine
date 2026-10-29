@@ -10,6 +10,11 @@ import streamlit as st
 
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
+from search_engine.query_assist import (
+    NebiusQueryAssistant,
+    QueryAssistantError,
+    is_simple_query,
+)
 from search_engine.storage import JsonStore
 
 
@@ -140,6 +145,18 @@ def main() -> None:
             '- Use quotes for phrases, e.g. `"search systems"`'
         )
 
+    query_assistant = NebiusQueryAssistant()
+    improve_query = st.checkbox(
+        "Improve plain-text queries with NVIDIA Nemotron",
+        value=False,
+        help=(
+            "Sends the query text to Nebius Token Factory for a rewrite. "
+            "Search results still come only from your indexed documents."
+        ),
+    )
+    if improve_query and not query_assistant.is_configured:
+        st.info("Set NEBIUS_API_KEY in the app environment to enable AI query assistance.")
+
     query_col, limit_col = st.columns([5, 1])
     with st.form("search_form"):
         query = query_col.text_input(
@@ -154,11 +171,29 @@ def main() -> None:
             st.session_state.last_search = None
             st.info("Enter a query to search the collection.")
         else:
+            effective_query = query
+            assisted = False
+            if improve_query:
+                if not query_assistant.is_configured:
+                    st.warning("AI assistance is not configured. Searching with the original query.")
+                elif not is_simple_query(query):
+                    st.info(
+                        "Boolean and quoted phrase queries are kept unchanged to preserve their syntax."
+                    )
+                else:
+                    try:
+                        effective_query = query_assistant.rewrite(query)
+                        assisted = effective_query.casefold() != query.strip().casefold()
+                    except QueryAssistantError as exc:
+                        st.warning(f"{exc} Searching with the original query.")
+
             try:
-                parsed = engine.parser.parse(query)
-                results = engine.search(query, limit=limit)
+                parsed = engine.parser.parse(effective_query)
+                results = engine.search(effective_query, limit=limit)
                 st.session_state.last_search = {
                     "query": query,
+                    "effective_query": effective_query,
+                    "assisted": assisted,
                     "terms": parsed.terms,
                     "results": [(item.document_id, item.score) for item in results],
                 }
@@ -169,6 +204,10 @@ def main() -> None:
     search_state: dict[str, Any] | None = st.session_state.last_search
     if search_state is not None:
         st.subheader(f'Results for: {search_state["query"]}')
+        if search_state["effective_query"].casefold() != search_state["query"].strip().casefold():
+            st.caption(f'Search query used: {search_state["effective_query"]}')
+        if improve_query and not search_state["assisted"] and is_simple_query(search_state["query"]):
+            st.caption("Results use the original query; AI assistance did not change it.")
         result_rows = search_state["results"]
         if not result_rows:
             st.info("No matching documents. Try different terms or add more documents.")

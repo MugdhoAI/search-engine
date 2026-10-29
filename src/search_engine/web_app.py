@@ -204,9 +204,16 @@ def main() -> None:
     search_state: dict[str, Any] | None = st.session_state.last_search
     if search_state is not None:
         st.subheader(f'Results for: {search_state["query"]}')
-        if search_state["effective_query"].casefold() != search_state["query"].strip().casefold():
+        if (
+            search_state["effective_query"].casefold()
+            != search_state["query"].strip().casefold()
+        ):
             st.caption(f'Search query used: {search_state["effective_query"]}')
-        if improve_query and not search_state["assisted"] and is_simple_query(search_state["query"]):
+        if (
+            improve_query
+            and not search_state["assisted"]
+            and is_simple_query(search_state["query"])
+        ):
             st.caption("Results use the original query; AI assistance did not change it.")
         result_rows = search_state["results"]
         if not result_rows:

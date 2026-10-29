@@ -129,25 +129,19 @@ For deployment platforms that install dependencies from `requirements.txt`, the 
 
 ### Optional AI query assistance
 
-The web app can optionally rewrite a plain-text query using NVIDIA Nemotron served by Nebius Token Factory. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF IDF ranker still determine which documents are returned.
+The web app can optionally rewrite a plain-text query using Gemini through Google's Gemini API. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF IDF ranker still determine which documents are returned.
 
-To enable it, set `NEBIUS_API_KEY` in the environment where Streamlit runs. Do not commit the key or put it in the source code. The default API endpoint is `https://api.tokenfactory.nebius.com/v1` and the default model ID is `nvidia/Nemotron-3.5-Super-VL`. You can override these with `NEBIUS_BASE_URL` and `NEBIUS_MODEL`.
+Copy `.env.example` to `.env` in the repository root, then set `GEMINI_API_KEY` in `.env`. The app loads local environment variables when it starts. Never commit `.env` or put the key in source code. For hosted deployment, set `GEMINI_API_KEY` in the platform's environment settings. The default API endpoint is `https://generativelanguage.googleapis.com/v1beta/openai` and the default model ID is `gemini-3.8-flash`. You can override these with `GEMINI_BASE_URL` and `GEMINI_MODEL`.
 
-PowerShell:
-
-```powershell
-$env:NEBIUS_API_KEY = "your-key"
-python -m streamlit run src/search_engine/web_app.py
-```
-
-macOS or Linux:
+After saving `.env`, start the app:
 
 ```bash
-export NEBIUS_API_KEY="your-key"
 python -m streamlit run src/search_engine/web_app.py
 ```
 
-AI assistance is off by default and must be selected in the interface. Provider requests time out after 12 seconds. Only the query text is sent to Nebius when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
+You can also set `GEMINI_API_KEY` directly in your shell instead of using `.env`.
+
+AI assistance is off by default and must be selected in the interface. Provider requests time out after 12 seconds. Only the query text is sent to Google's Gemini API when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
 
 ## Query behavior
 
@@ -172,7 +166,7 @@ The modules have distinct responsibilities:
 - `storage.py` persists source documents as JSON and rebuilds the index when loading.
 - `ingestion.py` extracts text from supported uploads with size and page limits.
 - `web_app.py` provides the Streamlit interface.
-- `query_assist.py` optionally rewrites plain-text queries through Nebius Token Factory with request and response size limits.
+- `query_assist.py` optionally rewrites plain-text queries through Google Gemini API with request and response size limits.
 - `cli.py` exposes search through the command line.
 - `scripts/evaluate_search.py` measures retrieval metrics and local query latency on a labeled synthetic corpus.
 
@@ -203,7 +197,7 @@ CI installs the package, runs pytest, executes the evaluation script, and checks
 
 ## Scope and limitations
 
-This project is a compact search engine and document search app, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance. The web app uses optional model-assisted lexical query rewriting, not semantic vector retrieval. Query assistance requires a Nebius Token Factory key and sends selected query text to that external service.
+This project is a compact search engine and document search app, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance. The web app uses optional model-assisted lexical query rewriting, not semantic vector retrieval. Query assistance requires a Google Gemini API key and sends selected query text to that external service.
 
 Potential extensions include broader Unicode-aware tokenization, positional postings, reproducible benchmarks on a defined corpus, and experiments with larger collections.
 

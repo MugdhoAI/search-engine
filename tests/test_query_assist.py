@@ -1,5 +1,4 @@
 import json
-from io import BytesIO
 from urllib.error import URLError
 from unittest.mock import patch
 
@@ -58,7 +57,7 @@ def test_provider_reads_environment_configuration(monkeypatch: pytest.MonkeyPatc
     with patch("search_engine.query_assist.urlopen", return_value=_response("search index")) as call:
         assert assistant.rewrite("find search index") == "search index"
     assert call.call_args.args[0].full_url == "https://example.test/v1/chat/completions"
-    assert json.loads(call.call_args.args[0].data)["model"] == "nvidia/example"
+    assert json.loads(call.call_args.args[0].data.decode("utf-8"))["model"] == "nvidia/example"
 
 
 def test_provider_requires_key() -> None:

@@ -145,7 +145,7 @@ def main() -> None:
             '- Use quotes for phrases, e.g. `"search systems"`'
         )
 
-    query_assistant = NebiusQueryAssistant()
+    query_assistant = GeminiQueryAssistant()
     improve_query = st.checkbox(
         "Improve plain-text queries with Gemini",
         value=False,

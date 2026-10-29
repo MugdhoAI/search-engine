@@ -13,7 +13,7 @@
 
 <p align="center">
   <strong>From raw text to ranked results.</strong><br>
-  A small Python search engine that makes the core information retrieval pipeline visible: tokenization, inverted indexing, query processing, TF IDF ranking, and JSON persistence.
+  A Python search engine with an inspectable retrieval pipeline, a command-line interface, and a web app for searching uploaded documents.
 </p>
 
 <table>
@@ -22,7 +22,7 @@
     <td align="center" width="20%"><strong>Inverted Index</strong><br><sub>Term to document postings</sub></td>
     <td align="center" width="20%"><strong>Query Support</strong><br><sub>AND, OR, quoted phrases</sub></td>
     <td align="center" width="20%"><strong>Ranking</strong><br><sub>TF IDF and deterministic order</sub></td>
-    <td align="center" width="20%"><strong>Storage and CLI</strong><br><sub>JSON persistence and terminal search</sub></td>
+    <td align="center" width="20%"><strong>Web App and CLI</strong><br><sub>Document uploads and terminal search</sub></td>
   </tr>
 </table>
 
@@ -34,7 +34,7 @@ Search engines combine several steps that are easy to hide behind a library: con
 
 ```mermaid
 flowchart LR
-    A[JSON document collection] --> B[Document model]
+    A[Source documents] --> B[Document model]
     B --> C[Tokenizer]
     C --> D[Inverted index]
     E[Search query] --> F[Query parser]
@@ -110,6 +110,23 @@ The columns are score, document ID, and document text. Equal scores are ordered 
 python -m search_engine.cli examples/documents.json "python AND search"
 ```
 
+## Web application
+
+The Streamlit interface lets you search the sample collection, upload documents, inspect excerpts, and expand a result to read its extracted text. The original retrieval engine and CLI remain available.
+
+Install the app dependencies and start the interface:
+
+```bash
+python -m pip install -e ".[app,dev]"
+python -m streamlit run src/search_engine/web_app.py
+```
+
+The app accepts UTF-8 TXT files, Markdown files, and text-based PDFs. It enforces a 5 MiB upload limit, a 100-page PDF limit, and a 200,000-character extracted-text limit. Duplicate uploads are skipped by content hash.
+
+Uploaded documents are held in the current Streamlit session and are not written to server storage. This avoids sharing private uploads between visitors, but it also means uploaded documents do not persist after the session ends. The app extracts embedded PDF text; it does not perform OCR on scanned pages. The included sample collection is loaded when a new session starts.
+
+For deployment platforms that install dependencies from `requirements.txt`, the file installs the package with its app extra.
+
 ## Query behavior
 
 - Bare terms use OR semantics by default.
@@ -131,6 +148,8 @@ The modules have distinct responsibilities:
 - `ranking.py` calculates TF IDF scores and orders results deterministically.
 - `engine.py` coordinates indexing, querying, and ranking through the public API.
 - `storage.py` persists source documents as JSON and rebuilds the index when loading.
+- `ingestion.py` extracts text from supported uploads with size and page limits.
+- `web_app.py` provides the Streamlit interface.
 - `cli.py` exposes search through the command line.
 
 The implementation uses Python dictionaries and sets so the retrieval structures remain visible rather than hidden behind a search framework.
@@ -146,13 +165,13 @@ Results are sorted by descending score and then ascending document ID. Deduplica
 
 ## Validation
 
-The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, and the CLI workflow.
+The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, the CLI workflow, and upload validation.
 
 CI installs the package, runs pytest, and checks the source and tests with Ruff on Python 3.11, 3.12, 3.13, and 3.14.
 
 ## Scope and limitations
 
-This is an educational search engine, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance.
+This project is a compact search engine and document search app, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance. The web app does not yet include semantic retrieval or AI-assisted query understanding.
 
 Potential extensions include broader Unicode-aware tokenization, positional postings, reproducible benchmarks on a defined corpus, and experiments with larger collections.
 

@@ -175,10 +175,12 @@ def main() -> None:
             assisted = False
             if improve_query:
                 if not query_assistant.is_configured:
-                    st.warning("AI assistance is not configured. Searching with the original query.")
+                    st.warning(
+                        "AI assistance is not configured. Searching with the original query."
+                    )
                 elif not is_simple_query(query):
                     st.info(
-                        "Boolean and quoted phrase queries are kept unchanged to preserve their syntax."
+                        "Boolean and quoted phrase queries stay unchanged to preserve syntax."
                     )
                 else:
                     try:

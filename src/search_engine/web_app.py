@@ -11,7 +11,7 @@ import streamlit as st
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
 from search_engine.query_assist import (
-    NebiusQueryAssistant,
+    GeminiQueryAssistant,
     QueryAssistantError,
     is_simple_query,
 )
@@ -147,15 +147,15 @@ def main() -> None:
 
     query_assistant = NebiusQueryAssistant()
     improve_query = st.checkbox(
-        "Improve plain-text queries with NVIDIA Nemotron",
+        "Improve plain-text queries with Gemini",
         value=False,
         help=(
-            "Sends the query text to Nebius Token Factory for a rewrite. "
+            "Sends the query text to Google's Gemini API for a rewrite. "
             "Search results still come only from your indexed documents."
         ),
     )
     if improve_query and not query_assistant.is_configured:
-        st.info("Set NEBIUS_API_KEY in the app environment to enable AI query assistance.")
+        st.info("Set GEMINI_API_KEY in the app environment to enable AI query assistance.")
 
     query_col, limit_col = st.columns([5, 1])
     with st.form("search_form"):

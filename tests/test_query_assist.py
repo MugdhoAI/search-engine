@@ -34,7 +34,10 @@ def _response(content: str) -> FakeResponse:
 
 def test_provider_uses_configured_defaults_and_rewrites_query() -> None:
     assistant = NebiusQueryAssistant(api_key="test-key")
-    with patch("search_engine.query_assist.urlopen", return_value=_response("  python indexing inverted index  ")) as call:
+    with patch(
+        "search_engine.query_assist.urlopen",
+        return_value=_response("  python indexing inverted index  "),
+    ) as call:
         result = assistant.rewrite("how does python search work")
 
     assert result == "python indexing inverted index"
@@ -54,7 +57,9 @@ def test_provider_reads_environment_configuration(monkeypatch: pytest.MonkeyPatc
     assistant = NebiusQueryAssistant()
 
     assert assistant.is_configured
-    with patch("search_engine.query_assist.urlopen", return_value=_response("search index")) as call:
+    with patch(
+        "search_engine.query_assist.urlopen", return_value=_response("search index")
+    ) as call:
         assert assistant.rewrite("find search index") == "search index"
     assert call.call_args.args[0].full_url == "https://example.test/v1/chat/completions"
     assert json.loads(call.call_args.args[0].data.decode("utf-8"))["model"] == "nvidia/example"
@@ -73,7 +78,10 @@ def test_explicit_search_syntax_is_not_rewritten(query: str) -> None:
 
 
 def test_transport_failure_has_safe_message() -> None:
-    with patch("search_engine.query_assist.urlopen", side_effect=URLError("secret endpoint details")):
+    with patch(
+        "search_engine.query_assist.urlopen",
+        side_effect=URLError("secret endpoint details"),
+    ):
         with pytest.raises(QueryAssistantError, match="temporarily unavailable") as error:
             NebiusQueryAssistant(api_key="test-key").rewrite("search documents")
     assert "secret endpoint details" not in str(error.value)
@@ -90,6 +98,8 @@ def test_invalid_model_suggestions_are_rejected(suggestion: object) -> None:
 
 def test_model_response_shape_is_validated() -> None:
     assistant = NebiusQueryAssistant(api_key="test-key")
-    with patch("search_engine.query_assist.urlopen", return_value=FakeResponse({"unexpected": []})):
+    with patch(
+        "search_engine.query_assist.urlopen", return_value=FakeResponse({"unexpected": []})
+    ):
         with pytest.raises(QueryAssistantError, match="unexpected response"):
             assistant.rewrite("search documents")

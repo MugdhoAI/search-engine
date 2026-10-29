@@ -1,4 +1,4 @@
-"""Optional query rewriting through the Nebius Token Factory chat completions API.
+"""Optional query rewriting through the Gemini API's OpenAI-compatible endpoint.
 
 The model may suggest a better lexical query; it never supplies search results.
 """
@@ -11,8 +11,8 @@ import re
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1"
-DEFAULT_MODEL = "nvidia/Nemotron-3.5-Super-VL"
+DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
+DEFAULT_MODEL = "gemini-3.8-flash"
 MAX_QUERY_CHARS = 240
 MAX_INPUT_QUERY_CHARS = 1_000
 MAX_RESPONSE_BYTES = 64 * 1024
@@ -48,8 +48,8 @@ def _validate_suggestion(suggestion: object) -> str:
     return cleaned
 
 
-class NebiusQueryAssistant:
-    """Rewrite a plain-language query using an OpenAI-compatible hosted model."""
+class GeminiQueryAssistant:
+    """Rewrite a plain-language query using Gemini's hosted API."""
 
     def __init__(
         self,
@@ -58,9 +58,9 @@ class NebiusQueryAssistant:
         model: str | None = None,
         timeout: float = DEFAULT_TIMEOUT_SECONDS,
     ) -> None:
-        self.api_key = api_key if api_key is not None else os.getenv("NEBIUS_API_KEY", "")
-        self.base_url = (base_url or os.getenv("NEBIUS_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-        self.model = model or os.getenv("NEBIUS_MODEL") or DEFAULT_MODEL
+        self.api_key = api_key if api_key is not None else os.getenv("GEMINI_API_KEY", "")
+        self.base_url = (base_url or os.getenv("GEMINI_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
+        self.model = model or os.getenv("GEMINI_MODEL") or DEFAULT_MODEL
         self.timeout = timeout
 
     @property
@@ -70,7 +70,7 @@ class NebiusQueryAssistant:
     def rewrite(self, query: str) -> str:
         if not self.is_configured:
             raise QueryAssistantError(
-                "Set NEBIUS_API_KEY in the app environment to enable AI query assistance."
+                "Set GEMINI_API_KEY in the app environment to enable AI query assistance."
             )
         if not isinstance(query, str) or not query.strip():
             raise QueryAssistantError("Enter a non-empty query.")
@@ -119,18 +119,18 @@ class NebiusQueryAssistant:
             body = json.loads(raw_body.decode("utf-8"))
         except HTTPError as exc:
             raise QueryAssistantError(
-                f"Query assistance service returned HTTP {exc.code}."
+                f"Gemini query assistance returned HTTP {exc.code}."
             ) from exc
         except (URLError, TimeoutError, OSError) as exc:
             raise QueryAssistantError(
-                "Query assistance is temporarily unavailable. Try the original query."
+                "Gemini query assistance is temporarily unavailable. Try the original query."
             ) from exc
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise QueryAssistantError("Query assistance returned an invalid response.") from exc
+            raise QueryAssistantError("Gemini query assistance returned an invalid response.") from exc
 
         try:
             suggestion = body["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc:
-            raise QueryAssistantError("Query assistance returned an unexpected response.") from exc
+            raise QueryAssistantError("Gemini returned an unexpected response.") from exc
 
         return _validate_suggestion(suggestion)

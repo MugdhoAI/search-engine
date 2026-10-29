@@ -7,7 +7,7 @@ import pytest
 from search_engine.query_assist import (
     DEFAULT_BASE_URL,
     DEFAULT_MODEL,
-    NebiusQueryAssistant,
+    GeminiQueryAssistant,
     QueryAssistantError,
     _validate_suggestion,
     is_simple_query,
@@ -34,7 +34,7 @@ def _response(content: str) -> FakeResponse:
 
 
 def test_provider_uses_configured_defaults_and_rewrites_query() -> None:
-    assistant = NebiusQueryAssistant(api_key="test-key")
+    assistant = GeminiQueryAssistant(api_key="test-key")
     with patch(
         "search_engine.query_assist.urlopen",
         return_value=_response("  python indexing inverted index  "),
@@ -52,10 +52,10 @@ def test_provider_uses_configured_defaults_and_rewrites_query() -> None:
 
 
 def test_provider_reads_environment_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("NEBIUS_API_KEY", "env-key")
-    monkeypatch.setenv("NEBIUS_BASE_URL", "https://example.test/v1/")
-    monkeypatch.setenv("NEBIUS_MODEL", "nvidia/example")
-    assistant = NebiusQueryAssistant()
+    monkeypatch.setenv("GEMINI_API_KEY", "env-key")
+    monkeypatch.setenv("GEMINI_BASE_URL", "https://example.test/v1/")
+    monkeypatch.setenv("GEMINI_MODEL", "gemini-test")
+    assistant = GeminiQueryAssistant()
 
     assert assistant.is_configured
     with patch(
@@ -63,19 +63,19 @@ def test_provider_reads_environment_configuration(monkeypatch: pytest.MonkeyPatc
     ) as call:
         assert assistant.rewrite("find search index") == "search index"
     assert call.call_args.args[0].full_url == "https://example.test/v1/chat/completions"
-    assert json.loads(call.call_args.args[0].data.decode("utf-8"))["model"] == "nvidia/example"
+    assert json.loads(call.call_args.args[0].data.decode("utf-8"))["model"] == "gemini-test"
 
 
 def test_provider_requires_key() -> None:
-    with pytest.raises(QueryAssistantError, match="NEBIUS_API_KEY"):
-        NebiusQueryAssistant(api_key="").rewrite("search documents")
+    with pytest.raises(QueryAssistantError, match="GEMINI_API_KEY"):
+        GeminiQueryAssistant(api_key="").rewrite("search documents")
 
 
 @pytest.mark.parametrize("query", ['"exact phrase"', "python AND search", "python OR search", ""])
 def test_explicit_search_syntax_is_not_rewritten(query: str) -> None:
     assert not is_simple_query(query)
     with pytest.raises(QueryAssistantError):
-        NebiusQueryAssistant(api_key="test-key").rewrite(query)
+        GeminiQueryAssistant(api_key="test-key").rewrite(query)
 
 
 def test_transport_failure_has_safe_message() -> None:
@@ -86,7 +86,7 @@ def test_transport_failure_has_safe_message() -> None:
         ),
         pytest.raises(QueryAssistantError, match="temporarily unavailable") as error,
     ):
-        NebiusQueryAssistant(api_key="test-key").rewrite("search documents")
+        GeminiQueryAssistant(api_key="test-key").rewrite("search documents")
     assert "secret endpoint details" not in str(error.value)
 
 
@@ -100,7 +100,7 @@ def test_invalid_model_suggestions_are_rejected(suggestion: object) -> None:
 
 
 def test_model_response_shape_is_validated() -> None:
-    assistant = NebiusQueryAssistant(api_key="test-key")
+    assistant = GeminiQueryAssistant(api_key="test-key")
     with (
         patch(
             "search_engine.query_assist.urlopen", return_value=FakeResponse({"unexpected": []})
@@ -111,7 +111,7 @@ def test_model_response_shape_is_validated() -> None:
 
 
 def test_provider_rejects_overlong_input_before_network_call() -> None:
-    assistant = NebiusQueryAssistant(api_key="test-key")
+    assistant = GeminiQueryAssistant(api_key="test-key")
     with (
         patch("search_engine.query_assist.urlopen") as call,
         pytest.raises(QueryAssistantError, match="1000 characters"),
@@ -132,4 +132,4 @@ def test_provider_rejects_oversized_response() -> None:
         patch("search_engine.query_assist.urlopen", return_value=LargeResponse({})),
         pytest.raises(QueryAssistantError, match="size limit"),
     ):
-        NebiusQueryAssistant(api_key="test-key").rewrite("search documents")
+        GeminiQueryAssistant(api_key="test-key").rewrite("search documents")

@@ -172,7 +172,9 @@ The modules have distinct responsibilities:
 - `storage.py` persists source documents as JSON and rebuilds the index when loading.
 - `ingestion.py` extracts text from supported uploads with size and page limits.
 - `web_app.py` provides the Streamlit interface.
+- `query_assist.py` optionally rewrites plain-text queries through Nebius Token Factory with request and response size limits.
 - `cli.py` exposes search through the command line.
+- `scripts/evaluate_search.py` measures retrieval metrics and local query latency on a labeled synthetic corpus.
 
 The implementation uses Python dictionaries and sets so the retrieval structures remain visible rather than hidden behind a search framework.
 
@@ -187,9 +189,17 @@ Results are sorted by descending score and then ascending document ID. Deduplica
 
 ## Validation
 
-The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, the CLI workflow, and upload validation.
+The tests cover tokenization, index construction, duplicate IDs, document lengths, ranked retrieval, Boolean and phrase queries, empty queries, invalid input, JSON persistence, deterministic ties, repeated query terms, the CLI workflow, upload validation, AI provider failure cases, and evaluation metric calculations.
 
-CI installs the package, runs pytest, and checks the source and tests with Ruff on Python 3.11, 3.12, 3.13, and 3.14.
+Run the fixed retrieval evaluation with:
+
+```bash
+python scripts/evaluate_search.py
+```
+
+The script reports Precision@5, Recall@5, Mean Reciprocal Rank, NDCG@5, and in-process p50/p95 query latency. Its relevance labels are manually assigned to a small synthetic corpus. It is intended as a reproducible regression check, not evidence of real-world relevance or large-corpus performance. Latency varies by machine and run.
+
+CI installs the package, runs pytest, executes the evaluation script, and checks the source and tests with Ruff on Python 3.11, 3.12, 3.13, and 3.14.
 
 ## Scope and limitations
 

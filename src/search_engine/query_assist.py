@@ -14,6 +14,8 @@ from urllib.request import Request, urlopen
 DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1"
 DEFAULT_MODEL = "nvidia/Nemotron-3.5-Super-VL"
 MAX_QUERY_CHARS = 240
+MAX_INPUT_QUERY_CHARS = 1_000
+MAX_RESPONSE_BYTES = 64 * 1024
 DEFAULT_TIMEOUT_SECONDS = 12.0
 
 
@@ -70,6 +72,12 @@ class NebiusQueryAssistant:
             raise QueryAssistantError(
                 "Set NEBIUS_API_KEY in the app environment to enable AI query assistance."
             )
+        if not isinstance(query, str) or not query.strip():
+            raise QueryAssistantError("Enter a non-empty query.")
+        if len(query) > MAX_INPUT_QUERY_CHARS:
+            raise QueryAssistantError(
+                f"Queries sent for AI assistance must be {MAX_INPUT_QUERY_CHARS} characters or fewer."
+            )
         if not is_simple_query(query):
             raise QueryAssistantError(
                 "AI assistance is available for plain-text queries only. "
@@ -105,7 +113,10 @@ class NebiusQueryAssistant:
 
         try:
             with urlopen(request, timeout=self.timeout) as response:
-                body = json.loads(response.read().decode("utf-8"))
+                raw_body = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(raw_body) > MAX_RESPONSE_BYTES:
+                raise QueryAssistantError("Query assistance response exceeded the size limit.")
+            body = json.loads(raw_body.decode("utf-8"))
         except HTTPError as exc:
             raise QueryAssistantError(
                 f"Query assistance service returned HTTP {exc.code}."

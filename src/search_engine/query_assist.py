@@ -10,8 +10,6 @@ import os
 import re
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-
-
 DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1"
 DEFAULT_MODEL = "nvidia/Nemotron-3.5-Super-VL"
 MAX_QUERY_CHARS = 240

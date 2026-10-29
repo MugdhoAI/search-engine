@@ -127,6 +127,28 @@ Uploaded documents are held in the current Streamlit session and are not written
 
 For deployment platforms that install dependencies from `requirements.txt`, the file installs the package with its app extra.
 
+### Optional AI query assistance
+
+The web app can optionally rewrite a plain-text query using NVIDIA Nemotron served by Nebius Token Factory. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF IDF ranker still determine which documents are returned.
+
+To enable it, set `NEBIUS_API_KEY` in the environment where Streamlit runs. Do not commit the key or put it in the source code. The default API endpoint is `https://api.tokenfactory.nebius.com/v1` and the default model ID is `nvidia/Nemotron-3.5-Super-VL`. You can override these with `NEBIUS_BASE_URL` and `NEBIUS_MODEL`.
+
+PowerShell:
+
+```powershell
+$env:NEBIUS_API_KEY = "your-key"
+python -m streamlit run src/search_engine/web_app.py
+```
+
+macOS or Linux:
+
+```bash
+export NEBIUS_API_KEY="your-key"
+python -m streamlit run src/search_engine/web_app.py
+```
+
+AI assistance is off by default and must be selected in the interface. Only the query text is sent to Nebius when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
+
 ## Query behavior
 
 - Bare terms use OR semantics by default.
@@ -171,7 +193,7 @@ CI installs the package, runs pytest, and checks the source and tests with Ruff 
 
 ## Scope and limitations
 
-This project is a compact search engine and document search app, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance. The web app does not yet include semantic retrieval or AI-assisted query understanding.
+This project is a compact search engine and document search app, not a replacement for Lucene or Elasticsearch. Tokenization currently focuses on ASCII letters and digits, so multilingual text normalization is limited. Phrase matching operates on document text rather than a positional index, and the project has no benchmark results or claims about large-corpus performance. The web app uses optional model-assisted lexical query rewriting, not semantic vector retrieval. Query assistance requires a Nebius Token Factory key and sends selected query text to that external service.
 
 Potential extensions include broader Unicode-aware tokenization, positional postings, reproducible benchmarks on a defined corpus, and experiments with larger collections.
 

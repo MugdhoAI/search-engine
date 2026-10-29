@@ -107,3 +107,24 @@ def test_model_response_shape_is_validated() -> None:
         pytest.raises(QueryAssistantError, match="unexpected response"),
     ):
         assistant.rewrite("search documents")
+
+
+def test_provider_rejects_overlong_input_before_network_call() -> None:
+    assistant = NebiusQueryAssistant(api_key="test-key")
+    with patch("search_engine.query_assist.urlopen") as call:
+        with pytest.raises(QueryAssistantError, match="1,000 characters"):
+            assistant.rewrite("x" * 1001)
+    call.assert_not_called()
+
+
+def test_provider_rejects_oversized_response() -> None:
+    from search_engine.query_assist import MAX_RESPONSE_BYTES
+
+    class LargeResponse(FakeResponse):
+        def read(self, amount: int = -1) -> bytes:
+            assert amount == MAX_RESPONSE_BYTES + 1
+            return b"x" * amount
+
+    with patch("search_engine.query_assist.urlopen", return_value=LargeResponse({})):
+        with pytest.raises(QueryAssistantError, match="size limit"):
+            NebiusQueryAssistant(api_key="test-key").rewrite("search documents")

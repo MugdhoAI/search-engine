@@ -1,6 +1,6 @@
 import json
-from urllib.error import URLError
 from unittest.mock import patch
+from urllib.error import URLError
 
 import pytest
 
@@ -78,12 +78,14 @@ def test_explicit_search_syntax_is_not_rewritten(query: str) -> None:
 
 
 def test_transport_failure_has_safe_message() -> None:
-    with patch(
-        "search_engine.query_assist.urlopen",
-        side_effect=URLError("secret endpoint details"),
+    with (
+        patch(
+            "search_engine.query_assist.urlopen",
+            side_effect=URLError("secret endpoint details"),
+        ),
+        pytest.raises(QueryAssistantError, match="temporarily unavailable") as error,
     ):
-        with pytest.raises(QueryAssistantError, match="temporarily unavailable") as error:
-            NebiusQueryAssistant(api_key="test-key").rewrite("search documents")
+        NebiusQueryAssistant(api_key="test-key").rewrite("search documents")
     assert "secret endpoint details" not in str(error.value)
 
 
@@ -98,8 +100,10 @@ def test_invalid_model_suggestions_are_rejected(suggestion: object) -> None:
 
 def test_model_response_shape_is_validated() -> None:
     assistant = NebiusQueryAssistant(api_key="test-key")
-    with patch(
-        "search_engine.query_assist.urlopen", return_value=FakeResponse({"unexpected": []})
+    with (
+        patch(
+            "search_engine.query_assist.urlopen", return_value=FakeResponse({"unexpected": []})
+        ),
+        pytest.raises(QueryAssistantError, match="unexpected response"),
     ):
-        with pytest.raises(QueryAssistantError, match="unexpected response"):
-            assistant.rewrite("search documents")
+        assistant.rewrite("search documents")

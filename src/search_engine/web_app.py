@@ -74,7 +74,7 @@ def main() -> None:
     with st.sidebar:
         st.header("Document collection")
         st.caption(
-            "Uploads stay in this browser session and are not written to server storage. "
+            "Uploads are held in this app session and are not written to server storage. "
             "TXT and Markdown files use UTF-8. PDFs must contain extractable text."
         )
         uploads = st.file_uploader(

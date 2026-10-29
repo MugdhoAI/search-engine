@@ -131,21 +131,15 @@ For deployment platforms that install dependencies from `requirements.txt`, the 
 
 The web app can optionally rewrite a plain-text query using Gemini through Google's Gemini API. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF IDF ranker still determine which documents are returned.
 
-To enable it, set `GEMINI_API_KEY` in the environment where Streamlit runs. Do not commit the key or put it in the source code. The default API endpoint is `https://generativelanguage.googleapis.com/v1beta/openai` and the default model ID is `gemini-3.8-flash`. You can override these with `GEMINI_BASE_URL` and `GEMINI_MODEL`.
+Copy `.env.example` to `.env` in the repository root, then set `GEMINI_API_KEY` in `.env`. The app loads local environment variables when it starts. Never commit `.env` or put the key in source code. For hosted deployment, set `GEMINI_API_KEY` in the platform's environment settings. The default API endpoint is `https://generativelanguage.googleapis.com/v1beta/openai` and the default model ID is `gemini-3.8-flash`. You can override these with `GEMINI_BASE_URL` and `GEMINI_MODEL`.
 
-PowerShell:
-
-```powershell
-$env:GEMINI_API_KEY = "your-key"
-python -m streamlit run src/search_engine/web_app.py
-```
-
-macOS or Linux:
+After saving `.env`, start the app:
 
 ```bash
-export GEMINI_API_KEY="your-key"
 python -m streamlit run src/search_engine/web_app.py
 ```
+
+You can also set `GEMINI_API_KEY` directly in your shell instead of using `.env`.
 
 AI assistance is off by default and must be selected in the interface. Provider requests time out after 12 seconds. Only the query text is sent to Google's Gemini API when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
 

@@ -8,10 +8,11 @@ version = "0.1.0"
 description = "A lightweight search engine built from scratch in Python."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["pypdf>=5.0,<7"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+app = ["streamlit>=1.40,<2"]
 
 [project.scripts]
 search-engine = "search_engine.cli:main"

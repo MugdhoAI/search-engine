@@ -8,9 +8,9 @@ from typing import Any
 
 import streamlit as st
 
-from .engine import SearchEngine
-from .ingestion import extract_text
-from .storage import JsonStore
+from search_engine.engine import SearchEngine
+from search_engine.ingestion import extract_text
+from search_engine.storage import JsonStore
 
 
 def _initial_engine() -> tuple[SearchEngine, str | None]:

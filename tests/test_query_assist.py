@@ -24,8 +24,9 @@ class FakeResponse:
     def __exit__(self, *_args):
         return False
 
-    def read(self) -> bytes:
-        return json.dumps(self.payload).encode("utf-8")
+    def read(self, amount: int = -1) -> bytes:
+        payload = json.dumps(self.payload).encode("utf-8")
+        return payload if amount < 0 else payload[:amount]
 
 
 def _response(content: str) -> FakeResponse:
@@ -112,7 +113,7 @@ def test_model_response_shape_is_validated() -> None:
 def test_provider_rejects_overlong_input_before_network_call() -> None:
     assistant = NebiusQueryAssistant(api_key="test-key")
     with patch("search_engine.query_assist.urlopen") as call:
-        with pytest.raises(QueryAssistantError, match="1,000 characters"):
+        with pytest.raises(QueryAssistantError, match="1000 characters"):
             assistant.rewrite("x" * 1001)
     call.assert_not_called()
 

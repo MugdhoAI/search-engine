@@ -147,7 +147,7 @@ export NEBIUS_API_KEY="your-key"
 python -m streamlit run src/search_engine/web_app.py
 ```
 
-AI assistance is off by default and must be selected in the interface. Only the query text is sent to Nebius when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
+AI assistance is off by default and must be selected in the interface. Provider requests time out after 12 seconds. Only the query text is sent to Nebius when the feature is selected. Do not include confidential information in a query you choose to send to the hosted model. Quoted phrase and Boolean queries are left unchanged so their syntax is preserved. If the provider is not configured or the request fails, the app searches with the original query. Tests mock the HTTP layer and do not require a key or make network calls.
 
 ## Query behavior
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -21,6 +22,9 @@ MAX_QUERY_CHARS = 240
 MAX_INPUT_QUERY_CHARS = 1_000
 MAX_RESPONSE_BYTES = 64 * 1024
 DEFAULT_TIMEOUT_SECONDS = 12.0
+MAX_RETRY_ATTEMPTS = 3
+RETRYABLE_STATUS_CODES = {429, 503}
+RETRY_BACKOFF_SECONDS = (1.0, 2.0)
 
 
 class QueryAssistantError(RuntimeError):
@@ -115,20 +119,31 @@ class GeminiQueryAssistant:
             method="POST",
         )
 
+        for attempt in range(MAX_RETRY_ATTEMPTS):
+            try:
+                with urlopen(request, timeout=self.timeout) as response:
+                    raw_body = response.read(MAX_RESPONSE_BYTES + 1)
+                break
+            except HTTPError as exc:
+                if exc.code not in RETRYABLE_STATUS_CODES:
+                    raise QueryAssistantError(
+                        f"Gemini query assistance returned HTTP {exc.code}."
+                    ) from exc
+                if attempt + 1 == MAX_RETRY_ATTEMPTS:
+                    raise QueryAssistantError(
+                        "Gemini query assistance is temporarily unavailable. "
+                        "Try the original query."
+                    ) from exc
+                time.sleep(RETRY_BACKOFF_SECONDS[attempt])
+            except (URLError, TimeoutError, OSError) as exc:
+                raise QueryAssistantError(
+                    "Gemini query assistance is temporarily unavailable. Try the original query."
+                ) from exc
+
         try:
-            with urlopen(request, timeout=self.timeout) as response:
-                raw_body = response.read(MAX_RESPONSE_BYTES + 1)
             if len(raw_body) > MAX_RESPONSE_BYTES:
                 raise QueryAssistantError("Query assistance response exceeded the size limit.")
             body = json.loads(raw_body.decode("utf-8"))
-        except HTTPError as exc:
-            raise QueryAssistantError(
-                f"Gemini query assistance returned HTTP {exc.code}."
-            ) from exc
-        except (URLError, TimeoutError, OSError) as exc:
-            raise QueryAssistantError(
-                "Gemini query assistance is temporarily unavailable. Try the original query."
-            ) from exc
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise QueryAssistantError("Gemini query assistance returned an invalid response.") from exc
 

@@ -8,17 +8,16 @@ from __future__ import annotations
 
 import json
 import statistics
+import sys
 import time
 from collections.abc import Sequence
 from math import log2
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from search_engine.engine import SearchEngine  # noqa: E402
-
+from search_engine.engine import SearchEngine
 
 DOCUMENTS = (
     (1, "Python programming language syntax functions modules and packages"),

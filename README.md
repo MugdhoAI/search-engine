@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml"><img src="https://github.com/MugdhoAI/search-engine/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="https://github.com/MugdhoAI/search-engine/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/release-v0.1.0-blue" alt="Release v0.1.0"></a>
+  <a href="https://github.com/MugdhoAI/search-engine/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/release-v0.2.0-blue" alt="Release v0.2.0"></a>
   <a href="https://github.com/MugdhoAI/search-engine/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-3776AB?logo=python&logoColor=white" alt="Python 3.11, 3.12, 3.13, and 3.14">
 </p>

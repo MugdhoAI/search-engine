@@ -14,6 +14,8 @@
 <p align="center">
   <strong>From raw text to ranked results.</strong><br>
   A Python search engine with an inspectable retrieval pipeline, a command-line interface, and a web app for searching uploaded documents.
+  <br><br>
+  <a href="https://search-engine-mugdho.streamlit.app/"><strong>Open the live demo</strong></a>
 </p>
 
 <table>
@@ -21,7 +23,7 @@
     <td align="center" width="20%"><strong>Indexing</strong><br><sub>Tokenization and term frequencies</sub></td>
     <td align="center" width="20%"><strong>Inverted Index</strong><br><sub>Term to document postings</sub></td>
     <td align="center" width="20%"><strong>Query Support</strong><br><sub>AND, OR, quoted phrases</sub></td>
-    <td align="center" width="20%"><strong>Ranking</strong><br><sub>TF IDF and deterministic order</sub></td>
+    <td align="center" width="20%"><strong>Ranking</strong><br><sub>TF-IDF and deterministic order</sub></td>
     <td align="center" width="20%"><strong>Web App and CLI</strong><br><sub>Document uploads and terminal search</sub></td>
   </tr>
 </table>
@@ -112,8 +114,6 @@ python -m search_engine.cli examples/documents.json "python AND search"
 
 ## Web application
 
-**Live demo:** [Search Engine on Streamlit Community Cloud](https://search-engine-mugdho.streamlit.app/)
-
 The hosted app loads the sample collection and supports document uploads. Uploaded files are held in the current app session and are not written to server storage. Gemini query assistance is optional and requires a `GEMINI_API_KEY` configured in the app settings.
 
 The Streamlit interface lets you search the sample collection, upload documents, inspect excerpts, and expand a result to read its extracted text. The original retrieval engine and CLI remain available.
@@ -133,7 +133,7 @@ For deployment platforms that install dependencies from `requirements.txt`, the 
 
 ### Optional AI query assistance
 
-The web app can optionally rewrite a plain-text query using Gemini through Google's Gemini API. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF IDF ranker still determine which documents are returned.
+The web app can optionally rewrite a plain-text query using Gemini through Google's Gemini API. The model may add useful search terms, but it does not generate answers or search results. The existing index and TF-IDF ranker still determine which documents are returned.
 
 Copy `.env.example` to `.env` in the repository root, then set `GEMINI_API_KEY` in `.env`. The app loads local environment variables when it starts. Never commit `.env` or put the key in source code. For hosted deployment, set `GEMINI_API_KEY` in the platform's environment settings. The default API endpoint is `https://generativelanguage.googleapis.com/v1beta/openai` and the default model ID is `gemini-3.8-flash`. You can override these with `GEMINI_BASE_URL` and `GEMINI_MODEL`.
 
@@ -165,7 +165,7 @@ The modules have distinct responsibilities:
 - `tokenizer.py` normalizes text into searchable terms and removes stop words.
 - `index.py` builds the inverted index and stores term frequencies and document lengths.
 - `query.py` parses Boolean and phrase queries and selects candidate documents.
-- `ranking.py` calculates TF IDF scores and orders results deterministically.
+- `ranking.py` calculates TF-IDF scores and orders results deterministically.
 - `engine.py` coordinates indexing, querying, and ranking through the public API.
 - `storage.py` persists source documents as JSON and rebuilds the index when loading.
 - `ingestion.py` extracts text from supported uploads with size and page limits.

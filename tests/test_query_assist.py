@@ -1,6 +1,7 @@
 import json
+from unittest.mock import call as mock_call
 from unittest.mock import patch
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -33,6 +34,16 @@ def _response(content: str) -> FakeResponse:
     return FakeResponse({"choices": [{"message": {"content": content}}]})
 
 
+def _http_error(status_code: int) -> HTTPError:
+    return HTTPError(
+        "https://provider.example/private",
+        status_code,
+        "provider error",
+        {"Authorization": "secret-header"},
+        None,
+    )
+
+
 def test_provider_uses_configured_defaults_and_rewrites_query() -> None:
     assistant = GeminiQueryAssistant(api_key="test-key")
     with patch(
@@ -49,6 +60,54 @@ def test_provider_uses_configured_defaults_and_rewrites_query() -> None:
     assert payload["model"] == DEFAULT_MODEL
     assert payload["temperature"] == 0
     assert payload["max_tokens"] == 96
+
+
+@pytest.mark.parametrize("status_code", [503, 429])
+def test_provider_retries_retryable_status_then_succeeds(status_code: int) -> None:
+    with (
+        patch(
+            "search_engine.query_assist.urlopen",
+            side_effect=[_http_error(status_code), _response("search index")],
+        ) as request,
+        patch("search_engine.query_assist.time.sleep") as sleep,
+    ):
+        result = GeminiQueryAssistant(api_key="test-key").rewrite("search documents")
+
+    assert result == "search index"
+    assert request.call_count == 2
+    assert all(call.kwargs["timeout"] == 12.0 for call in request.call_args_list)
+    assert sleep.call_args_list == [mock_call(1.0)]
+
+
+def test_provider_stops_after_three_retryable_failures() -> None:
+    with (
+        patch(
+            "search_engine.query_assist.urlopen",
+            side_effect=[_http_error(503), _http_error(429), _http_error(503)],
+        ) as request,
+        patch("search_engine.query_assist.time.sleep") as sleep,
+        pytest.raises(QueryAssistantError, match="temporarily unavailable") as error,
+    ):
+        GeminiQueryAssistant(api_key="test-key").rewrite("search documents")
+
+    assert request.call_count == 3
+    assert sleep.call_args_list == [mock_call(1.0), mock_call(2.0)]
+    assert "private" not in str(error.value)
+    assert "secret-header" not in str(error.value)
+
+
+def test_provider_does_not_retry_non_retryable_http_status() -> None:
+    with (
+        patch(
+            "search_engine.query_assist.urlopen", side_effect=_http_error(401)
+        ) as request,
+        patch("search_engine.query_assist.time.sleep") as sleep,
+        pytest.raises(QueryAssistantError, match="HTTP 401"),
+    ):
+        GeminiQueryAssistant(api_key="test-key").rewrite("search documents")
+
+    request.assert_called_once()
+    sleep.assert_not_called()
 
 
 def test_provider_reads_environment_configuration(monkeypatch: pytest.MonkeyPatch) -> None:

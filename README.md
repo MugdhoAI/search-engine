@@ -112,6 +112,10 @@ python -m search_engine.cli examples/documents.json "python AND search"
 
 ## Web application
 
+**Live demo:** [Search Engine on Streamlit Community Cloud](https://search-engine-mugdho.streamlit.app/)
+
+The hosted app loads the sample collection and supports document uploads. Uploaded files are held in the current app session and are not written to server storage. Gemini query assistance is optional and requires a `GEMINI_API_KEY` configured in the app settings.
+
 The Streamlit interface lets you search the sample collection, upload documents, inspect excerpts, and expand a result to read its extracted text. The original retrieval engine and CLI remain available.
 
 Install the app dependencies and start the interface:

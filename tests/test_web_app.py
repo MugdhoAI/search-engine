@@ -19,7 +19,7 @@ def test_web_app_renders_sample_collection() -> None:
     app = _load_app()
 
     assert not app.exception
-    assert app.title[0].value == "Search Engine"
+    assert any("Find what matters in your documents." in item.value for item in app.markdown)
     assert app.metric[0].label == "Documents indexed"
     assert app.metric[0].value != "0"
 
@@ -35,4 +35,4 @@ def test_web_app_searches_sample_collection() -> None:
 
     assert not app.exception
     assert any("Results for: python" in item.value for item in app.subheader)
-    assert any("result(s), ordered by TF IDF score." in item.value for item in app.caption)
+    assert any("result(s), ordered by TF-IDF score." in item.value for item in app.caption)

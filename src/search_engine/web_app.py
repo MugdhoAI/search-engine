@@ -11,9 +11,9 @@ import streamlit as st
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
 from search_engine.query_assist import (
+    is_simple_query,
     GeminiQueryAssistant,
     QueryAssistantError,
-    is_simple_query,
 )
 from search_engine.storage import JsonStore
 

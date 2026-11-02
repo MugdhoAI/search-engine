@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -53,8 +54,11 @@ PAGE_STYLES = """
 .stApp [data-testid="stCaptionContainer"] p { color: var(--muted); }
 .topline {
   display:flex; align-items:center; justify-content:space-between; gap:16px;
-  padding: 8px 0 42px; border-bottom: 1px solid rgba(210,195,255,.10);
+  padding: 8px 0 24px; border-bottom: 1px solid rgba(210,195,255,.10);
 }
+.topnav { display:flex; gap:22px; align-items:center; }
+.topnav a { color:#aaa3b6; font-size:12px; text-decoration:none; transition:color .18s ease; }
+.topnav a:hover { color:#e0d0ff; }
 .brand { display:flex; align-items:center; gap:11px; color:#f8f6ff; font-weight:800; font-size:15px; letter-spacing:-.03em; }
 .brand-mark { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(191,166,255,.38); border-radius:10px; background:linear-gradient(145deg,rgba(151,105,232,.28),rgba(89,57,136,.10)); color:#d2bdff; box-shadow:0 0 28px rgba(148,92,236,.16); }
 .brand-sub { color:#938da2; font-size:11px; font-weight:500; letter-spacing:.02em; }
@@ -91,6 +95,35 @@ PAGE_STYLES = """
 .proof-kicker { color:#898395; font:10px 'DM Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
 .proof-value { margin-top:6px; color:#ece7f7; font-size:14px; font-weight:700; }
 .section-rule { height:1px; margin:0 0 28px; background:linear-gradient(90deg,transparent,rgba(193,168,239,.22),transparent); }
+.workspace { max-width:1040px; margin:24px auto 44px; overflow:hidden; border:1px solid rgba(185,155,231,.23); border-radius:18px; background:linear-gradient(145deg,rgba(20,17,28,.97),rgba(11,10,16,.98)); box-shadow:0 22px 70px rgba(0,0,0,.24),0 0 50px rgba(117,75,173,.08); }
+.workspace-top { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 20px; border-bottom:1px solid rgba(206,187,238,.13); }
+.workspace-title { color:#f3eefb; font-size:13px; font-weight:700; }
+.workspace-state { color:#9c91ae; font:10px 'DM Mono',monospace; letter-spacing:.08em; }
+.workspace-body { display:grid; grid-template-columns:1.05fr 1.4fr; }
+.workspace-side { padding:22px; border-right:1px solid rgba(206,187,238,.12); }
+.workspace-main { padding:22px; }
+.mini-label { color:#9a91a9; font:10px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+.mini-title { margin:7px 0 16px; color:#f3eefb; font-size:19px; font-weight:750; letter-spacing:-.04em; }
+.metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.metric-card { padding:13px; border:1px solid rgba(207,188,240,.13); border-radius:11px; background:rgba(255,255,255,.025); }
+.metric-card b { display:block; margin-top:5px; color:#f3eefb; font-size:18px; }
+.metric-card span { color:#a49bae; font-size:10px; }
+.pipeline { display:grid; gap:9px; }
+.pipeline-step { display:flex; align-items:center; gap:11px; padding:10px 12px; border:1px solid rgba(207,188,240,.12); border-radius:10px; background:rgba(255,255,255,.022); }
+.step-number { display:grid; place-items:center; flex:0 0 24px; height:24px; border-radius:7px; background:rgba(151,111,213,.18); color:#d1baff; font:10px 'DM Mono',monospace; }
+.step-copy b { display:block; color:#e8e1f1; font-size:12px; }
+.step-copy span { color:#948da0; font-size:10px; }
+.section-heading { max-width:1040px; margin:44px auto 18px; }
+.section-heading h3 { margin:8px 0 6px; color:#f2edf8; font-size:26px; letter-spacing:-.05em; }
+.section-heading p { margin:0; color:#a8a1b3; font-size:13px; }
+.document-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; max-width:1040px; margin:0 auto; }
+.document-card { min-width:0; padding:15px 16px; border:1px solid rgba(207,188,240,.13); border-radius:12px; background:rgba(20,18,27,.74); }
+.document-id { color:#b99bea; font:10px 'DM Mono',monospace; }
+.document-card p { margin:8px 0 0; color:#d0c9db; font-size:12px; line-height:1.65; overflow-wrap:anywhere; }
+.query-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; max-width:1040px; margin:18px auto 36px; }
+.query-card { padding:15px; border:1px solid rgba(207,188,240,.13); border-radius:12px; background:rgba(20,18,27,.74); }
+.query-card code { display:inline-block; margin:0 0 9px; color:#d3baff; font:12px 'DM Mono',monospace; }
+.query-card p { margin:0; color:#a8a1b3; font-size:11px; line-height:1.55; }
 .stApp [data-testid="stVerticalBlockBorderWrapper"] { border-color:rgba(202,184,232,.14); border-radius:14px; background:rgba(20,18,27,.68); }
 .stApp [data-testid="stExpander"] { border-color:rgba(202,184,232,.16); border-radius:10px; background:rgba(9,8,13,.45); }
 .stApp [data-testid="stAlert"] { background:rgba(27,23,36,.9); border-color:rgba(182,152,229,.22); color:#ddd7e9; }
@@ -103,9 +136,10 @@ PAGE_STYLES = """
 .mono { font-family:'DM Mono',monospace; }
 @media (max-width: 760px) {
   .block-container { padding: .8rem 1rem 3rem; }
-  .topline { padding-bottom:25px; }
+  .topline { padding-bottom:18px; }
   .brand-sub { display:none; }
-  .hero { padding:48px 3px 10px; }
+  .topnav { display:none; }
+  .hero { padding:38px 3px 10px; }
   .hero h2 { font-size:clamp(40px,11vw,60px); }
   .hero-copy { font-size:14px; }
   .stApp [data-testid="stForm"] { padding:11px; margin-top:20px; }
@@ -114,6 +148,11 @@ PAGE_STYLES = """
   .proof-grid { grid-template-columns:1fr; gap:8px; margin:22px auto 32px; }
   .proof-card { display:flex; justify-content:space-between; align-items:center; gap:10px; }
   .proof-value { margin:0; text-align:right; }
+  .workspace-body { grid-template-columns:1fr; }
+  .workspace-side { border-right:0; border-bottom:1px solid rgba(206,187,238,.12); }
+  .workspace-main, .workspace-side { padding:17px; }
+  .document-grid, .query-grid { grid-template-columns:1fr; }
+  .workspace-state { text-align:right; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
@@ -179,6 +218,9 @@ def main() -> None:
           <div class="brand"><span class="brand-mark" aria-hidden="true">⌕</span>
             <span>SEARCH ENGINE</span><span class="brand-sub">/ built from first principles</span>
           </div>
+          <nav class="topnav" aria-label="Page sections">
+            <a href="#search">Search</a><a href="#pipeline">How it works</a><a href="#collection">Sample collection</a>
+          </nav>
           <span class="brand-sub">OPEN SOURCE · PYTHON</span>
         </div>
         """,
@@ -188,7 +230,7 @@ def main() -> None:
     st.title("Search Engine")
     st.markdown(
         f"""
-        <section class="hero" aria-label="Search the collection">
+        <section class="hero" id="search" aria-label="Search the collection">
           <span class="eyebrow"><span class="pulse"></span> A small search engine, made inspectable</span>
           <h2>Find what matters.<br><span>See how it ranks.</span></h2>
           <p class="hero-copy">Search your documents with a transparent retrieval pipeline —
@@ -289,18 +331,6 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <div class="proof-grid" aria-label="How search works">
-          <div class="proof-card"><div class="proof-kicker">01 / Index</div><div class="proof-value">Inverted postings</div></div>
-          <div class="proof-card"><div class="proof-kicker">02 / Match</div><div class="proof-value">Boolean + phrases</div></div>
-          <div class="proof-card"><div class="proof-kicker">03 / Rank</div><div class="proof-value">TF‑IDF · stable ties</div></div>
-        </div>
-        <div class="section-rule"></div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     improve_query = st.checkbox(
         "Improve plain-text queries with Gemini",
         value=False,
@@ -380,6 +410,72 @@ def main() -> None:
             "TXT, Markdown, or text-based PDF documents."
         )
 
+
+    search_terms = len(engine.index.terms())
+    st.markdown(
+        f"""
+        <section class="workspace" aria-label="Search engine dashboard">
+          <div class="workspace-top">
+            <div class="workspace-title">Search workspace</div>
+            <div class="workspace-state">LIVE SESSION · INDEX READY</div>
+          </div>
+          <div class="workspace-body">
+            <div class="workspace-side">
+              <div class="mini-label">Your current index</div>
+              <div class="mini-title">A clear view of the collection.</div>
+              <div class="metric-grid">
+                <div class="metric-card"><span>DOCUMENTS</span><b>{engine.count()}</b></div>
+                <div class="metric-card"><span>UNIQUE TERMS</span><b>{search_terms}</b></div>
+              </div>
+            </div>
+            <div class="workspace-main" id="pipeline">
+              <div class="mini-label">From text to ranked results</div>
+              <div class="mini-title">The retrieval pipeline</div>
+              <div class="pipeline">
+                <div class="pipeline-step"><span class="step-number">01</span><div class="step-copy"><b>Tokenize</b><span>Normalize text and remove stop words</span></div></div>
+                <div class="pipeline-step"><span class="step-number">02</span><div class="step-copy"><b>Build an inverted index</b><span>Map each term to matching documents and term frequency</span></div></div>
+                <div class="pipeline-step"><span class="step-number">03</span><div class="step-copy"><b>Parse the query</b><span>Resolve terms, AND / OR operators, and quoted phrases</span></div></div>
+                <div class="pipeline-step"><span class="step-number">04</span><div class="step-copy"><b>Rank with TF‑IDF</b><span>Order matches by score, then document ID for stable ties</span></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    documents_html = "".join(
+        "<article class=\"document-card\">"
+        f"<span class=\"document-id\">DOC {document.document_id:03d}</span>"
+        f"<p>{escape(_excerpt(document.text, (), max_chars=150))}</p>"
+        "</article>"
+        for document in engine.index.documents()
+    )
+    st.markdown(
+        f"""
+        <section id="collection">
+          <div class="section-heading">
+            <div class="mini-label">INSPECTABLE BY DESIGN · {engine.count()} DOCUMENTS</div>
+            <h3>Start with the sample collection.</h3>
+            <p>These are the real documents loaded with the app. Add your own TXT, Markdown, or text-based PDF files from Your collection.</p>
+          </div>
+          <div class="document-grid">{documents_html}</div>
+        </section>
+        <section id="query-guide">
+          <div class="section-heading">
+            <div class="mini-label">QUERY GUIDE</div>
+            <h3>Simple syntax. Visible behavior.</h3>
+            <p>Try a real query above; each example maps to a mode supported by the parser.</p>
+          </div>
+          <div class="query-grid">
+            <article class="query-card"><code>python</code><p>Plain terms use OR matching and are ranked by TF‑IDF.</p></article>
+            <article class="query-card"><code>python AND search</code><p>AND requires every query term to match a document.</p></article>
+            <article class="query-card"><code>"search systems"</code><p>Quoted terms must appear next to each other in the document.</p></article>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
 if __name__ == "__main__":
     main()

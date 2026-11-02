@@ -358,11 +358,6 @@ def _render_hero() -> None:
                 Search your collection with an inspectable inverted index
                 and deterministic TF-IDF ranking.
             </p>
-            <div class="search-features">
-                <span class="search-feature">TF-IDF ranking</span>
-                <span class="search-feature">Boolean search</span>
-                <span class="search-feature">Phrase search</span>
-            </div>
         </section>
         """,
         unsafe_allow_html=True,
@@ -404,6 +399,17 @@ def main() -> None:
             limit = st.selectbox("Results", options=[5, 10, 20, 50], index=1)
         with button_col:
             submitted = st.form_submit_button("Search", type="primary", use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="search-features">
+            <span class="search-feature">TF-IDF ranking</span>
+            <span class="search-feature">Boolean search</span>
+            <span class="search-feature">Phrase search</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     option_col, note_col = st.columns([1.25, 2.75], vertical_alignment="center")
     with option_col:

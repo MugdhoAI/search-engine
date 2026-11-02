@@ -2,8 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from search_engine.web_app import BACKGROUND_VIDEO_HTML
-
 try:
     from streamlit.testing.v1 import AppTest
 except ModuleNotFoundError:
@@ -28,7 +26,10 @@ def test_web_app_renders_sample_collection() -> None:
     assert app.metric[0].value != "0"
 
 
+@pytest.mark.skipif(AppTest is None, reason="Install the app extra to run this smoke test.")
 def test_web_app_includes_a_muted_looping_video_background() -> None:
+    from search_engine.web_app import BACKGROUND_VIDEO_HTML
+
     app = _load_app()
     static_dir = Path(__file__).resolve().parents[1] / "src" / "search_engine" / "static"
     markup = "\n".join(item.value for item in app.html)

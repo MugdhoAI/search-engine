@@ -19,7 +19,9 @@ def test_web_app_renders_sample_collection() -> None:
     app = _load_app()
 
     assert not app.exception
-    assert app.title[0].value == "Search Engine"
+    assert any("Find what matters in your documents." in item.value for item in app.markdown)
+    assert any("deterministic TF IDF ranking." in item.value for item in app.markdown)
+    assert any("Document collection" in item.value for item in app.markdown)
     assert app.metric[0].label == "Documents indexed"
     assert app.metric[0].value != "0"
 
@@ -36,3 +38,16 @@ def test_web_app_searches_sample_collection() -> None:
     assert not app.exception
     assert any("Results for: python" in item.value for item in app.subheader)
     assert any("result(s), ordered by TF IDF score." in item.value for item in app.caption)
+
+
+@pytest.mark.skipif(AppTest is None, reason="Install the app extra to run this smoke test.")
+def test_web_app_shows_a_helpful_no_results_state() -> None:
+    app = _load_app()
+
+    app.text_input[0].set_value("no matching term")
+    search_button = next(button for button in app.button if button.label == "Search")
+    search_button.click()
+    app.run()
+
+    assert not app.exception
+    assert any("No matching documents" in item.value for item in app.info)

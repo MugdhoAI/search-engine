@@ -3,159 +3,263 @@
 from __future__ import annotations
 
 import hashlib
-from html import escape
 from pathlib import Path
 from typing import Any
 
 import streamlit as st
 
+from search_engine import query_assist
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
-from search_engine.query_assist import (
-    GeminiQueryAssistant,
-    QueryAssistantError,
-    is_simple_query,
-)
 from search_engine.storage import JsonStore
 
-PAGE_STYLES = """
+PURPLE_THEME = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 :root {
-  --ink: #f5f3fa;
-  --muted: #a5a0b2;
-  --violet: #a78bfa;
-  --violet-bright: #c4b5fd;
-  --surface: #111019;
-  --line: rgba(210, 195, 255, .14);
+    color-scheme: dark;
+    --search-bg: #09080f;
+    --search-sidebar: #15121e;
+    --search-surface: #1b1726;
+    --search-raised: #241c32;
+    --search-border: #382a4b;
+    --search-purple: #b86bff;
+    --search-purple-bright: #d49aff;
+    --search-text: #f7f3fc;
+    --search-muted: #b8adc5;
 }
+
 .stApp {
-  background:
-    radial-gradient(ellipse at 50% -18%, rgba(110, 57, 184, .26), transparent 46%),
-    radial-gradient(ellipse at 88% 20%, rgba(69, 38, 119, .12), transparent 30%),
-    #08070c;
-  color: var(--ink);
-  font-family: 'Manrope', sans-serif;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(91, 37, 132, 0.19), transparent 42%),
+        var(--search-bg);
+    color: var(--search-text);
 }
-.stApp, .stApp [data-testid="stMarkdownContainer"], .stApp label,
-.stApp input, .stApp button, .stApp textarea, .stApp [data-testid="stMetricValue"] {
-  font-family: 'Manrope', sans-serif;
+
+[data-testid="stHeader"] {
+    background: rgba(9, 8, 15, 0.78);
 }
-#MainMenu, footer, header[data-testid="stHeader"] { visibility: hidden; height: 0; }
-.block-container { max-width: 1220px; padding: 1.2rem 2rem 5rem; }
+
 [data-testid="stSidebar"] {
-  background: #0e0c14;
-  border-right: 1px solid var(--line);
+    background: var(--search-sidebar);
+    border-right: 1px solid rgba(184, 107, 255, 0.12);
 }
-[data-testid="stSidebar"] > div:first-child { padding-top: 1.4rem; }
-.stApp h1 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; color:var(--ink); }
-.stApp h2, .stApp h3 { color: var(--ink); letter-spacing: -.035em; }
-.stApp p, .stApp li { color: #d0ccda; }
-.stApp [data-testid="stCaptionContainer"] p { color: var(--muted); }
-.topline {
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-  padding: 8px 0 24px; border-bottom: 1px solid rgba(210,195,255,.10);
+
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: 0.85rem;
 }
-.topnav { display:flex; gap:22px; align-items:center; }
-.topnav a { color:#aaa3b6; font-size:12px; text-decoration:none; transition:color .18s ease; }
-.topnav a:hover { color:#e0d0ff; }
-.brand { display:flex; align-items:center; gap:11px; color:#f8f6ff; font-weight:800; font-size:15px; letter-spacing:-.03em; }
-.brand-mark { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(191,166,255,.38); border-radius:10px; background:linear-gradient(145deg,rgba(151,105,232,.28),rgba(89,57,136,.10)); color:#d2bdff; box-shadow:0 0 28px rgba(148,92,236,.16); }
-.brand-sub { color:#938da2; font-size:11px; font-weight:500; letter-spacing:.02em; }
-.hero { position:relative; overflow:hidden; padding:62px 24px 15px; text-align:center; }
-.hero:before { content:""; position:absolute; z-index:0; width:min(800px,90vw); height:260px; left:50%; top:-225px; transform:translateX(-50%); border-radius:50%; border:1px solid rgba(190,144,255,.42); box-shadow:0 8px 50px rgba(146,80,237,.27),0 20px 95px rgba(97,46,154,.23),inset 0 -10px 38px rgba(171,111,255,.22); pointer-events:none; }
-.hero:after { content:""; position:absolute; z-index:0; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(131,74,200,.12),transparent 52%); pointer-events:none; }
-.hero > * { position:relative; z-index:1; }
-.eyebrow { display:inline-flex; align-items:center; gap:9px; padding:7px 12px; border:1px solid rgba(198,174,248,.18); border-radius:999px; background:rgba(24,20,33,.72); color:#c9bddf; font:11px 'DM Mono',monospace; letter-spacing:.09em; text-transform:uppercase; }
-.pulse { width:7px; height:7px; border-radius:50%; background:#b79af5; box-shadow:0 0 11px #a477f5; }
-.hero h2 { margin:22px auto 13px; max-width:850px; color:#f7f4fc; font-size:clamp(42px,6.4vw,76px); line-height:1.02; font-weight:800; letter-spacing:-.075em; }
-.hero h2 span { color:#c0a4ff; text-shadow:0 0 32px rgba(154,107,241,.33); }
-.hero-copy { max-width:650px; margin:0 auto; color:#aaa5b6; font-size:15px; line-height:1.8; }
-.hero-foot { display:flex; justify-content:center; align-items:center; gap:9px; flex-wrap:wrap; margin:23px auto 0; color:#8f899f; font-size:11px; }
-.hero-foot code { padding:5px 8px; border:1px solid rgba(207,188,248,.13); border-radius:7px; color:#d2c1f5; background:rgba(255,255,255,.035); font:11px 'DM Mono',monospace; }
-.hero-foot .separator { color:#605a6b; }
-.stApp [data-testid="stForm"] { max-width:850px; margin:21px auto 0; padding:14px; border:1px solid rgba(179,143,242,.32); border-radius:18px; background:linear-gradient(150deg,rgba(24,20,33,.95),rgba(14,12,20,.96)); box-shadow:0 15px 65px rgba(98,56,155,.14),0 0 34px rgba(149,106,227,.09); }
-.stApp [data-testid="stForm"] [data-testid="stHorizontalBlock"] { align-items:end; gap:12px; }
-.stApp [data-testid="stTextInput"] input, .stApp [data-testid="stSelectbox"] > div > div {
-  min-height:48px; border:1px solid rgba(206,192,231,.16); border-radius:11px; background:#0b0a10; color:#f5f1fc;
+
+.block-container {
+    max-width: 1180px;
+    padding-top: 3.2rem;
+    padding-bottom: 4rem;
 }
-.stApp [data-testid="stTextInput"] input::placeholder { color:#756e80; }
-.stApp [data-testid="stTextInput"] label, .stApp [data-testid="stSelectbox"] label { color:#a8a1b5; font-size:12px; }
-.stApp [data-testid="stFormSubmitButton"] button, .stApp button[kind="primary"] {
-  min-height:48px; border:1px solid rgba(207,183,255,.42); border-radius:11px;
-  background:linear-gradient(135deg,#a785ef,#7951c7); color:#fff; font-weight:700;
-  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-  box-shadow:0 6px 24px rgba(132,84,211,.20);
+
+.search-hero {
+    max-width: 940px;
+    margin: 0 auto 1.8rem;
+    text-align: center;
 }
-.stApp [data-testid="stFormSubmitButton"] button:hover, .stApp button[kind="primary"]:hover { transform:translateY(-1px); filter:brightness(1.08); box-shadow:0 8px 28px rgba(142,91,226,.34); }
-.stApp button:focus-visible, .stApp input:focus-visible, .stApp [role="combobox"]:focus-visible { outline:2px solid #c2a5ff !important; outline-offset:3px; }
-.quick-label { margin:5px 0 0; color:#898395; font:10px 'DM Mono',monospace; letter-spacing:.1em; text-align:center; text-transform:uppercase; }
-.proof-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:850px; margin:28px auto 44px; }
-.proof-card { padding:14px 16px; text-align:left; border:1px solid rgba(211,195,241,.12); border-radius:13px; background:linear-gradient(140deg,rgba(29,25,38,.72),rgba(17,15,23,.80)); }
-.proof-kicker { color:#898395; font:10px 'DM Mono',monospace; letter-spacing:.08em; text-transform:uppercase; }
-.proof-value { margin-top:6px; color:#ece7f7; font-size:14px; font-weight:700; }
-.section-rule { height:1px; margin:0 0 28px; background:linear-gradient(90deg,transparent,rgba(193,168,239,.22),transparent); }
-.workspace { max-width:1040px; margin:24px auto 44px; overflow:hidden; border:1px solid rgba(185,155,231,.23); border-radius:18px; background:linear-gradient(145deg,rgba(20,17,28,.97),rgba(11,10,16,.98)); box-shadow:0 22px 70px rgba(0,0,0,.24),0 0 50px rgba(117,75,173,.08); }
-.workspace-top { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px 20px; border-bottom:1px solid rgba(206,187,238,.13); }
-.workspace-title { color:#f3eefb; font-size:13px; font-weight:700; }
-.workspace-state { color:#9c91ae; font:10px 'DM Mono',monospace; letter-spacing:.08em; }
-.workspace-body { display:grid; grid-template-columns:1.05fr 1.4fr; }
-.workspace-side { padding:22px; border-right:1px solid rgba(206,187,238,.12); }
-.workspace-main { padding:22px; }
-.mini-label { color:#9a91a9; font:10px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
-.mini-title { margin:7px 0 16px; color:#f3eefb; font-size:19px; font-weight:750; letter-spacing:-.04em; }
-.metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
-.metric-card { padding:13px; border:1px solid rgba(207,188,240,.13); border-radius:11px; background:rgba(255,255,255,.025); }
-.metric-card b { display:block; margin-top:5px; color:#f3eefb; font-size:18px; }
-.metric-card span { color:#a49bae; font-size:10px; }
-.pipeline { display:grid; gap:9px; }
-.pipeline-step { display:flex; align-items:center; gap:11px; padding:10px 12px; border:1px solid rgba(207,188,240,.12); border-radius:10px; background:rgba(255,255,255,.022); }
-.step-number { display:grid; place-items:center; flex:0 0 24px; height:24px; border-radius:7px; background:rgba(151,111,213,.18); color:#d1baff; font:10px 'DM Mono',monospace; }
-.step-copy b { display:block; color:#e8e1f1; font-size:12px; }
-.step-copy span { color:#948da0; font-size:10px; }
-.section-heading { max-width:1040px; margin:44px auto 18px; }
-.section-heading h3 { margin:8px 0 6px; color:#f2edf8; font-size:26px; letter-spacing:-.05em; }
-.section-heading p { margin:0; color:#a8a1b3; font-size:13px; }
-.document-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; max-width:1040px; margin:0 auto; }
-.document-card { min-width:0; padding:15px 16px; border:1px solid rgba(207,188,240,.13); border-radius:12px; background:rgba(20,18,27,.74); }
-.document-id { color:#b99bea; font:10px 'DM Mono',monospace; }
-.document-card p { margin:8px 0 0; color:#d0c9db; font-size:12px; line-height:1.65; overflow-wrap:anywhere; }
-.query-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; max-width:1040px; margin:18px auto 36px; }
-.query-card { padding:15px; border:1px solid rgba(207,188,240,.13); border-radius:12px; background:rgba(20,18,27,.74); }
-.query-card code { display:inline-block; margin:0 0 9px; color:#d3baff; font:12px 'DM Mono',monospace; }
-.query-card p { margin:0; color:#a8a1b3; font-size:11px; line-height:1.55; }
-.stApp [data-testid="stVerticalBlockBorderWrapper"] { border-color:rgba(202,184,232,.14); border-radius:14px; background:rgba(20,18,27,.68); }
-.stApp [data-testid="stExpander"] { border-color:rgba(202,184,232,.16); border-radius:10px; background:rgba(9,8,13,.45); }
-.stApp [data-testid="stAlert"] { background:rgba(27,23,36,.9); border-color:rgba(182,152,229,.22); color:#ddd7e9; }
-.stApp [data-testid="stMetric"] { padding:12px; border:1px solid var(--line); border-radius:12px; background:#14111b; }
-.stApp [data-testid="stMetricLabel"] { color:#aaa2b5; }
-.stApp [data-testid="stMetricValue"] { color:#f1ebfc; }
-.stApp [data-testid="stFileUploader"] section { border-color:rgba(202,184,232,.24); background:#14111b; }
-.stApp [data-testid="stCheckbox"] label { color:#d0c9da; }
-.stApp [data-testid="stMarkdownContainer"] code { color:#d4c3fa; background:rgba(161,125,221,.11); }
-.mono { font-family:'DM Mono',monospace; }
-@media (max-width: 760px) {
-  .block-container { padding: .8rem 1rem 3rem; }
-  .topline { padding-bottom:18px; }
-  .brand-sub { display:none; }
-  .topnav { display:none; }
-  .hero { padding:38px 3px 10px; }
-  .hero h2 { font-size:clamp(40px,11vw,60px); }
-  .hero-copy { font-size:14px; }
-  .stApp [data-testid="stForm"] { padding:11px; margin-top:20px; }
-  .stApp [data-testid="stForm"] [data-testid="stHorizontalBlock"] { flex-direction:column; gap:7px; }
-  .stApp [data-testid="stForm"] [data-testid="column"] { width:100% !important; flex:1 1 100% !important; }
-  .proof-grid { grid-template-columns:1fr; gap:8px; margin:22px auto 32px; }
-  .proof-card { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-  .proof-value { margin:0; text-align:right; }
-  .workspace-body { grid-template-columns:1fr; }
-  .workspace-side { border-right:0; border-bottom:1px solid rgba(206,187,238,.12); }
-  .workspace-main, .workspace-side { padding:17px; }
-  .document-grid, .query-grid { grid-template-columns:1fr; }
-  .workspace-state { text-align:right; }
+
+.search-eyebrow {
+    margin-bottom: 0.8rem;
+    color: var(--search-purple-bright);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
 }
+
+.search-hero h1 {
+    margin: 0;
+    color: var(--search-purple-bright);
+    font-size: clamp(2rem, 4vw, 3.05rem);
+    font-weight: 750;
+    line-height: 1.12;
+    letter-spacing: -0.045em;
+}
+
+.search-hero p {
+    max-width: 700px;
+    margin: 0.8rem auto 1.2rem;
+    color: var(--search-muted);
+    font-size: 1rem;
+    line-height: 1.65;
+    text-align: center;
+}
+
+.search-features {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1.1rem;
+}
+
+.search-feature {
+    padding: 0.38rem 0.72rem;
+    border: 1px solid rgba(184, 107, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(184, 107, 255, 0.07);
+    color: #d7b4f4;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+[data-testid="stTextInput"] input {
+    min-height: 3.65rem;
+    border: 1px solid #5a3a78;
+    border-radius: 14px;
+    background: var(--search-raised);
+    color: var(--search-text);
+    font-size: 1rem;
+    box-shadow: 0 0 0 1px rgba(184, 107, 255, 0.08),
+                0 0 24px rgba(168, 85, 247, 0.13);
+}
+
+[data-testid="stTextInput"] input:focus {
+    border-color: var(--search-purple);
+    box-shadow: 0 0 0 1px var(--search-purple),
+                0 0 25px rgba(168, 85, 247, 0.28);
+}
+
+[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    min-height: 3.1rem;
+    border-color: var(--search-border);
+    border-radius: 10px;
+    background: var(--search-surface);
+}
+
+.stButton > button,
+.stFormSubmitButton > button {
+    min-height: 2.9rem;
+    border: 1px solid #a65be8;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #a855f7, #8b45cf);
+    color: #fff;
+    font-weight: 650;
+    transition: filter 120ms ease, transform 120ms ease;
+}
+
+.stButton > button:hover,
+.stFormSubmitButton > button:hover {
+    border-color: #d49aff;
+    background: linear-gradient(135deg, #b86bff, #9954df);
+    color: #fff;
+    filter: brightness(1.06);
+}
+
+.stButton > button:focus-visible,
+.stFormSubmitButton > button:focus-visible {
+    outline: 2px solid var(--search-purple-bright);
+    outline-offset: 3px;
+}
+
+[data-testid="stBaseButton-secondary"] {
+    border: 1px solid var(--search-border) !important;
+    border-radius: 10px !important;
+    background: var(--search-surface) !important;
+    color: var(--search-text) !important;
+}
+
+[data-testid="stBaseButton-secondary"]:hover {
+    border-color: var(--search-purple) !important;
+    color: var(--search-purple-bright) !important;
+}
+
+[data-testid="stFileUploader"] section {
+    border-color: var(--search-border);
+    border-radius: 11px;
+    background: var(--search-raised);
+    color: var(--search-muted);
+}
+
+[data-testid="stFileUploader"] [data-testid^="stBaseButton"] {
+    border-color: var(--search-border);
+    border-radius: 9px;
+    background: var(--search-surface);
+    color: var(--search-text);
+}
+
+[data-testid="stFileUploader"] [data-testid^="stBaseButton"]:hover {
+    border-color: var(--search-purple);
+    color: var(--search-purple-bright);
+}
+
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: var(--search-border);
+    border-radius: 13px;
+    background: rgba(27, 23, 38, 0.78);
+}
+
+[data-testid="stMetric"] {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--search-border);
+    border-radius: 11px;
+    background: rgba(27, 23, 38, 0.75);
+}
+
+[data-testid="stMetricValue"] {
+    color: var(--search-purple-bright);
+}
+
+[data-testid="stCaptionContainer"] {
+    color: var(--search-muted);
+}
+
+[data-testid="stExpander"] {
+    border-color: var(--search-border);
+    border-radius: 10px;
+    background: rgba(20, 16, 29, 0.55);
+}
+
+.search-section-label {
+    margin: 1.5rem 0 0.6rem;
+    color: #e9ddf4;
+    font-size: 1.08rem;
+    font-weight: 700;
+}
+
+.search-empty-state {
+    margin-top: 1.2rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--search-border);
+    border-radius: 12px;
+    background: rgba(27, 23, 38, 0.7);
+    color: var(--search-muted);
+    line-height: 1.6;
+}
+
+.search-empty-state strong {
+    color: var(--search-text);
+}
+
+@media (max-width: 720px) {
+    .block-container {
+        padding: 2rem 1rem 3rem;
+    }
+
+    .search-hero {
+        margin-bottom: 1.3rem;
+        text-align: center;
+    }
+
+    .search-hero p {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+    }
+
+    .search-features {
+        justify-content: flex-start;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>
 """
@@ -196,62 +300,13 @@ def _content_fingerprint(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def main() -> None:
-    st.set_page_config(
-        page_title="Search Engine — inspectable document search",
-        page_icon="⌕",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
-    st.markdown(PAGE_STYLES, unsafe_allow_html=True)
-
-    if "engine" not in st.session_state:
-        engine, load_error = _initial_engine()
-        st.session_state.engine = engine
-        st.session_state.sample_load_error = load_error
-        st.session_state.last_search = None
-
-    engine: SearchEngine = st.session_state.engine
-    st.markdown(
-        """
-        <div class="topline">
-          <div class="brand"><span class="brand-mark" aria-hidden="true">⌕</span>
-            <span>SEARCH ENGINE</span><span class="brand-sub">/ built from first principles</span>
-          </div>
-          <nav class="topnav" aria-label="Page sections">
-            <a href="#search">Search</a><a href="#pipeline">How it works</a><a href="#collection">Sample collection</a>
-          </nav>
-          <span class="brand-sub">OPEN SOURCE · PYTHON</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    # Keep a native Streamlit title for page semantics and smoke-test compatibility.
-    st.title("Search Engine")
-    st.markdown(
-        f"""
-        <section class="hero" id="search" aria-label="Search the collection">
-          <span class="eyebrow"><span class="pulse"></span> A small search engine, made inspectable</span>
-          <h2>Find what matters.<br><span>See how it ranks.</span></h2>
-          <p class="hero-copy">Search your documents with a transparent retrieval pipeline —
-            from an inverted index to deterministic TF‑IDF ranking.</p>
-          <div class="hero-foot"><code>{engine.count()} sample documents</code>
-            <span class="separator">/</span><code>AND · OR · quoted phrases</code>
-            <span class="separator">/</span><code>Python · no black box</code>
-          </div>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if st.session_state.sample_load_error:
-        st.warning(st.session_state.sample_load_error)
-
+def _render_sidebar(engine: SearchEngine) -> None:
     with st.sidebar:
-        st.markdown("### Your collection")
+        st.markdown("### Document collection")
         st.caption(
-            "Add files to this session's index. Uploads are not written to server storage. "
-            "TXT and Markdown use UTF-8; PDFs must contain extractable text."
+            "Files stay in this app session and are not written to server storage. "
+            "TXT and Markdown files use UTF 8. PDFs need extractable text. "
+            "Limits are 5 MiB per file, 100 pages per PDF, and 200,000 extracted characters."
         )
         uploads = st.file_uploader(
             "Add documents",
@@ -259,7 +314,8 @@ def main() -> None:
             accept_multiple_files=True,
             help="Maximum 5 MiB per file, 100 pages per PDF, and 200,000 extracted characters.",
         )
-        if st.button("Add selected files", type="primary", disabled=not uploads):
+
+        if st.button("Add selected files", type="primary", disabled=not uploads, use_container_width=True):
             added = 0
             skipped = 0
             errors: list[str] = []
@@ -276,11 +332,11 @@ def main() -> None:
                     if fingerprint in existing_hashes:
                         skipped += 1
                         continue
-                    text = extract_text(uploaded.name, content)
+                    extracted = extract_text(uploaded.name, content)
                     suffix = Path(uploaded.name).suffix.casefold().lstrip(".")
                     engine.add(
                         next_id,
-                        text,
+                        extracted,
                         {
                             "filename": Path(uploaded.name).name,
                             "file_type": suffix,
@@ -302,43 +358,102 @@ def main() -> None:
                 st.error(error)
 
         st.metric("Documents indexed", engine.count())
-        if st.button("Clear collection", disabled=engine.count() == 0):
+
+        if st.button(
+            "Clear collection",
+            disabled=engine.count() == 0,
+            use_container_width=True,
+            help="Remove all documents from this session's index.",
+        ):
             st.session_state.engine = SearchEngine()
             st.session_state.last_search = None
             st.rerun()
-        st.divider()
-        st.caption("QUERY SYNTAX")
-        st.markdown(
-            "Bare terms use OR semantics. `AND` requires every term; `OR` accepts either side. "
-            'Use quotes for a phrase, for example `"search systems"`. '
-            "The collection resets when your session ends."
-        )
 
-    query_assistant = GeminiQueryAssistant()
-    with st.form("search_form"):
-        query_col, limit_col = st.columns([5, 1])
-        with query_col:
-            query = st.text_input(
-                "Search the collection",
-                placeholder='Try “search systems” or python AND index',
+        with st.expander("Search syntax", expanded=False):
+            st.markdown(
+                "- Bare terms use OR semantics\n"
+                "- `AND` requires all terms\n"
+                "- `OR` accepts either side\n"
+                '- Use quotes for phrases, e.g. `"search systems"`'
             )
-        with limit_col:
-            limit = st.selectbox("Results", options=[5, 10, 20, 50], index=1)
-        submitted = st.form_submit_button("Search", type="primary", use_container_width=True)
+
+
+def _render_hero() -> None:
     st.markdown(
-        '<p class="quick-label">Try a query &nbsp; · &nbsp; python &nbsp; · &nbsp; '
-        'python AND search &nbsp; · &nbsp; "search systems"</p>',
+        """
+        <section class="search-hero">
+            <div class="search-eyebrow">MUGDHOAI / SEARCH</div>
+            <h1>Find what matters in your documents.</h1>
+            <p>
+                Search your collection with an inspectable inverted index
+                and deterministic TF IDF ranking.
+            </p>
+        </section>
+        """,
         unsafe_allow_html=True,
     )
 
-    improve_query = st.checkbox(
-        "Improve plain-text queries with Gemini",
-        value=False,
-        help=(
-            "Sends the query text to Google's Gemini API for a rewrite. "
-            "Search results still come only from your indexed documents."
-        ),
+
+def main() -> None:
+    st.set_page_config(
+        page_title="MugdhoAI Search Engine",
+        page_icon="⌕",
+        layout="wide",
+        initial_sidebar_state="expanded",
     )
+    st.markdown(PURPLE_THEME, unsafe_allow_html=True)
+
+    if "engine" not in st.session_state:
+        engine, load_error = _initial_engine()
+        st.session_state.engine = engine
+        st.session_state.sample_load_error = load_error
+        st.session_state.last_search = None
+
+    engine: SearchEngine = st.session_state.engine
+    _render_sidebar(engine)
+
+    _render_hero()
+    if st.session_state.sample_load_error:
+        st.warning(st.session_state.sample_load_error)
+
+    query_assistant = query_assist.GeminiQueryAssistant()
+    with st.form("search_form", clear_on_submit=False):
+        query_col, limit_col, button_col = st.columns([7, 1.35, 1.15], vertical_alignment="bottom")
+        with query_col:
+            query = st.text_input(
+                "Search your collection",
+                placeholder='Search documents, concepts, or exact phrases...',
+                label_visibility="visible",
+            )
+        with limit_col:
+            limit = st.selectbox("Results", options=[5, 10, 20, 50], index=1)
+        with button_col:
+            submitted = st.form_submit_button("Search", type="primary", use_container_width=True)
+
+    st.markdown(
+        """
+        <div class="search-features">
+            <span class="search-feature">TF IDF ranking</span>
+            <span class="search-feature">Boolean search</span>
+            <span class="search-feature">Phrase search</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    option_col, note_col = st.columns([1.25, 2.75], vertical_alignment="center")
+    with option_col:
+        improve_query = st.checkbox(
+            "Improve query with Gemini",
+            value=False,
+            help=(
+                "Sends the query text to Google's Gemini API for a rewrite. "
+                "Search results still come only from your indexed documents."
+            ),
+        )
+    with note_col:
+        st.caption("Gemini rewrites plain text queries only. It does not search documents or generate answers.")
+
     if improve_query and not query_assistant.is_configured:
         st.info("Set GEMINI_API_KEY in the app environment to enable AI query assistance.")
 
@@ -351,14 +466,18 @@ def main() -> None:
             assisted = False
             if improve_query:
                 if not query_assistant.is_configured:
-                    st.warning("AI assistance is not configured. Searching with the original query.")
-                elif not is_simple_query(query):
-                    st.info("Boolean and quoted phrase queries stay unchanged to preserve syntax.")
+                    st.warning(
+                        "AI assistance is not configured. Searching with the original query."
+                    )
+                elif not query_assist.is_simple_query(query):
+                    st.info(
+                        "Boolean and quoted phrase queries stay unchanged to preserve syntax."
+                    )
                 else:
                     try:
                         effective_query = query_assistant.rewrite(query)
                         assisted = effective_query.casefold() != query.strip().casefold()
-                    except QueryAssistantError as exc:
+                    except query_assist.QueryAssistantError as exc:
                         st.warning(f"{exc} Searching with the original query.")
 
             try:
@@ -377,6 +496,7 @@ def main() -> None:
 
     search_state: dict[str, Any] | None = st.session_state.last_search
     if search_state is not None:
+        st.markdown('<div class="search-section-label">Search results</div>', unsafe_allow_html=True)
         st.subheader(f'Results for: {search_state["query"]}')
         if (
             search_state["effective_query"].casefold()
@@ -386,9 +506,10 @@ def main() -> None:
         if (
             improve_query
             and not search_state["assisted"]
-            and is_simple_query(search_state["query"])
+            and query_assist.is_simple_query(search_state["query"])
         ):
             st.caption("Results use the original query; AI assistance did not change it.")
+
         result_rows = search_state["results"]
         if not result_rows:
             st.info("No matching documents. Try different terms or add more documents.")
@@ -400,82 +521,22 @@ def main() -> None:
                 title = metadata.get("filename", f"Document {document_id}")
                 with st.container(border=True):
                     st.markdown(f"**{title}**")
-                    st.caption(f"Document ID {document_id} · TF‑IDF score {score:.6f}")
+                    st.caption(f"Document {document_id}  ·  TF IDF score {score:.6f}")
                     st.write(_excerpt(document.text, tuple(search_state["terms"])))
                     with st.expander("View full extracted text"):
                         st.text(document.text)
     else:
-        st.caption(
-            "The sample collection is ready. Search above, or open **Your collection** to add "
-            "TXT, Markdown, or text-based PDF documents."
+        st.markdown(
+            """
+            <div class="search-empty-state">
+                <strong>Your sample collection is ready.</strong>
+                Add TXT, Markdown, or text based PDF documents from the sidebar
+                to search across more material.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-
-    search_terms = len(engine.index.terms())
-    st.markdown(
-        f"""
-        <section class="workspace" aria-label="Search engine dashboard">
-          <div class="workspace-top">
-            <div class="workspace-title">Search workspace</div>
-            <div class="workspace-state">LIVE SESSION · INDEX READY</div>
-          </div>
-          <div class="workspace-body">
-            <div class="workspace-side">
-              <div class="mini-label">Your current index</div>
-              <div class="mini-title">A clear view of the collection.</div>
-              <div class="metric-grid">
-                <div class="metric-card"><span>DOCUMENTS</span><b>{engine.count()}</b></div>
-                <div class="metric-card"><span>UNIQUE TERMS</span><b>{search_terms}</b></div>
-              </div>
-            </div>
-            <div class="workspace-main" id="pipeline">
-              <div class="mini-label">From text to ranked results</div>
-              <div class="mini-title">The retrieval pipeline</div>
-              <div class="pipeline">
-                <div class="pipeline-step"><span class="step-number">01</span><div class="step-copy"><b>Tokenize</b><span>Normalize text and remove stop words</span></div></div>
-                <div class="pipeline-step"><span class="step-number">02</span><div class="step-copy"><b>Build an inverted index</b><span>Map each term to matching documents and term frequency</span></div></div>
-                <div class="pipeline-step"><span class="step-number">03</span><div class="step-copy"><b>Parse the query</b><span>Resolve terms, AND / OR operators, and quoted phrases</span></div></div>
-                <div class="pipeline-step"><span class="step-number">04</span><div class="step-copy"><b>Rank with TF‑IDF</b><span>Order matches by score, then document ID for stable ties</span></div></div>
-              </div>
-            </div>
-          </div>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    documents_html = "".join(
-        "<article class=\"document-card\">"
-        f"<span class=\"document-id\">DOC {document.document_id:03d}</span>"
-        f"<p>{escape(_excerpt(document.text, (), max_chars=150))}</p>"
-        "</article>"
-        for document in engine.index.documents()
-    )
-    st.markdown(
-        f"""
-        <section id="collection">
-          <div class="section-heading">
-            <div class="mini-label">INSPECTABLE BY DESIGN · {engine.count()} DOCUMENTS</div>
-            <h3>Start with the sample collection.</h3>
-            <p>These are the real documents loaded with the app. Add your own TXT, Markdown, or text-based PDF files from Your collection.</p>
-          </div>
-          <div class="document-grid">{documents_html}</div>
-        </section>
-        <section id="query-guide">
-          <div class="section-heading">
-            <div class="mini-label">QUERY GUIDE</div>
-            <h3>Simple syntax. Visible behavior.</h3>
-            <p>Try a real query above; each example maps to a mode supported by the parser.</p>
-          </div>
-          <div class="query-grid">
-            <article class="query-card"><code>python</code><p>Plain terms use OR matching and are ranked by TF‑IDF.</p></article>
-            <article class="query-card"><code>python AND search</code><p>AND requires every query term to match a document.</p></article>
-            <article class="query-card"><code>"search systems"</code><p>Quoted terms must appear next to each other in the document.</p></article>
-          </div>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
 
 if __name__ == "__main__":
     main()

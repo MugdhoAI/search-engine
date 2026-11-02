@@ -8,7 +8,7 @@ from typing import Any
 
 import streamlit as st
 
-from search_engine import query_assist
+from search_engine import query_assist  # noqa: I001
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
 from search_engine.storage import JsonStore

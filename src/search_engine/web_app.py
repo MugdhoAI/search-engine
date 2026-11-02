@@ -8,9 +8,9 @@ from typing import Any
 
 import streamlit as st
 
+from search_engine import query_assist
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
-from search_engine import query_assist
 from search_engine.storage import JsonStore
 
 
@@ -472,7 +472,7 @@ def main() -> None:
         if (
             improve_query
             and not search_state["assisted"]
-            and is_simple_query(search_state["query"])
+            and query_assist.is_simple_query(search_state["query"])
         ):
             st.caption("Results use the original query; AI assistance did not change it.")
 

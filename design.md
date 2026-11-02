@@ -41,7 +41,7 @@ The application is a working search tool, not a marketing site. Keep search imme
 | Bright purple | `#D49AFF` | Headline and focus states |
 | Glow | `rgba(168, 85, 247, 0.28)` | Search focus only |
 | Main text | `#F7F3FC` | Headings and body |
-| Muted text | `#B8AD C5` | Supporting text; normalize to `#B8ADC5` |
+| Muted text | `#B8ADC5` | Supporting text |
 | Success | `#65D6A2` | Successful upload/status |
 | Warning | `#F2C879` | Warnings |
 | Error | `#FF8585` | Errors |

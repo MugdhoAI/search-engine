@@ -13,7 +13,6 @@ from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
 from search_engine.storage import JsonStore
 
-
 PURPLE_THEME = """
 <style>
 :root {
@@ -84,6 +83,7 @@ PURPLE_THEME = """
     color: var(--search-muted);
     font-size: 1rem;
     line-height: 1.65;
+    text-align: center;
 }
 
 .search-features {
@@ -153,6 +153,37 @@ PURPLE_THEME = """
     outline-offset: 3px;
 }
 
+[data-testid="stBaseButton-secondary"] {
+    border: 1px solid var(--search-border) !important;
+    border-radius: 10px !important;
+    background: var(--search-surface) !important;
+    color: var(--search-text) !important;
+}
+
+[data-testid="stBaseButton-secondary"]:hover {
+    border-color: var(--search-purple) !important;
+    color: var(--search-purple-bright) !important;
+}
+
+[data-testid="stFileUploader"] section {
+    border-color: var(--search-border);
+    border-radius: 11px;
+    background: var(--search-raised);
+    color: var(--search-muted);
+}
+
+[data-testid="stFileUploader"] [data-testid^="stBaseButton"] {
+    border-color: var(--search-border);
+    border-radius: 9px;
+    background: var(--search-surface);
+    color: var(--search-text);
+}
+
+[data-testid="stFileUploader"] [data-testid^="stBaseButton"]:hover {
+    border-color: var(--search-purple);
+    color: var(--search-purple-bright);
+}
+
 [data-testid="stVerticalBlockBorderWrapper"] {
     border-color: var(--search-border);
     border-radius: 13px;
@@ -208,12 +239,13 @@ PURPLE_THEME = """
 
     .search-hero {
         margin-bottom: 1.3rem;
-        text-align: left;
+        text-align: center;
     }
 
     .search-hero p {
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
     }
 
     .search-features {
@@ -273,7 +305,8 @@ def _render_sidebar(engine: SearchEngine) -> None:
         st.markdown("### Document collection")
         st.caption(
             "Files stay in this app session and are not written to server storage. "
-            "TXT and Markdown files use UTF-8. PDFs need extractable text."
+            "TXT and Markdown files use UTF 8. PDFs need extractable text. "
+            "Limits are 5 MiB per file, 100 pages per PDF, and 200,000 extracted characters."
         )
         uploads = st.file_uploader(
             "Add documents",
@@ -330,6 +363,7 @@ def _render_sidebar(engine: SearchEngine) -> None:
             "Clear collection",
             disabled=engine.count() == 0,
             use_container_width=True,
+            help="Remove all documents from this session's index.",
         ):
             st.session_state.engine = SearchEngine()
             st.session_state.last_search = None
@@ -352,7 +386,7 @@ def _render_hero() -> None:
             <h1>Find what matters in your documents.</h1>
             <p>
                 Search your collection with an inspectable inverted index
-                and deterministic TF-IDF ranking.
+                and deterministic TF IDF ranking.
             </p>
         </section>
         """,
@@ -399,7 +433,7 @@ def main() -> None:
     st.markdown(
         """
         <div class="search-features">
-            <span class="search-feature">TF-IDF ranking</span>
+            <span class="search-feature">TF IDF ranking</span>
             <span class="search-feature">Boolean search</span>
             <span class="search-feature">Phrase search</span>
         </div>
@@ -418,7 +452,7 @@ def main() -> None:
             ),
         )
     with note_col:
-        st.caption("AI assistance is optional. Your documents are searched locally in this app session.")
+        st.caption("Gemini rewrites plain text queries only. It does not search documents or generate answers.")
 
     if improve_query and not query_assistant.is_configured:
         st.info("Set GEMINI_API_KEY in the app environment to enable AI query assistance.")
@@ -480,14 +514,14 @@ def main() -> None:
         if not result_rows:
             st.info("No matching documents. Try different terms or add more documents.")
         else:
-            st.caption(f"{len(result_rows)} result(s), ordered by TF-IDF score.")
+            st.caption(f"{len(result_rows)} result(s), ordered by TF IDF score.")
             for document_id, score in result_rows:
                 document = engine.document(document_id)
                 metadata = document.metadata or {}
                 title = metadata.get("filename", f"Document {document_id}")
                 with st.container(border=True):
                     st.markdown(f"**{title}**")
-                    st.caption(f"Document {document_id}  ·  TF-IDF score {score:.6f}")
+                    st.caption(f"Document {document_id}  ·  TF IDF score {score:.6f}")
                     st.write(_excerpt(document.text, tuple(search_state["terms"])))
                     with st.expander("View full extracted text"):
                         st.text(document.text)
@@ -496,7 +530,7 @@ def main() -> None:
             """
             <div class="search-empty-state">
                 <strong>Your sample collection is ready.</strong>
-                Add TXT, Markdown, or text-based PDF documents from the sidebar
+                Add TXT, Markdown, or text based PDF documents from the sidebar
                 to search across more material.
             </div>
             """,

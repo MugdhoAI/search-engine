@@ -10,11 +10,7 @@ import streamlit as st
 
 from search_engine.engine import SearchEngine
 from search_engine.ingestion import extract_text
-from search_engine.query_assist import (
-    GeminiQueryAssistant,
-    QueryAssistantError,
-    is_simple_query,
-)
+from search_engine import query_assist
 from search_engine.storage import JsonStore
 
 
@@ -386,7 +382,7 @@ def main() -> None:
     if st.session_state.sample_load_error:
         st.warning(st.session_state.sample_load_error)
 
-    query_assistant = GeminiQueryAssistant()
+    query_assistant = query_assist.GeminiQueryAssistant()
     with st.form("search_form", clear_on_submit=False):
         query_col, limit_col, button_col = st.columns([7, 1.35, 1.15], vertical_alignment="bottom")
         with query_col:
@@ -439,7 +435,7 @@ def main() -> None:
                     st.warning(
                         "AI assistance is not configured. Searching with the original query."
                     )
-                elif not is_simple_query(query):
+                elif not query_assist.is_simple_query(query):
                     st.info(
                         "Boolean and quoted phrase queries stay unchanged to preserve syntax."
                     )
@@ -447,7 +443,7 @@ def main() -> None:
                     try:
                         effective_query = query_assistant.rewrite(query)
                         assisted = effective_query.casefold() != query.strip().casefold()
-                    except QueryAssistantError as exc:
+                    except query_assist.QueryAssistantError as exc:
                         st.warning(f"{exc} Searching with the original query.")
 
             try:

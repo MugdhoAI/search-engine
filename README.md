@@ -118,8 +118,6 @@ The hosted app loads the sample collection and supports document uploads. Upload
 
 The Streamlit interface lets you search the sample collection, upload documents, inspect excerpts, and expand a result to read its extracted text. The original retrieval engine and CLI remain available.
 
-The hero uses a muted, looping Purple Desert video background with a matching poster image. Streamlit static serving is enabled in `.streamlit/config.toml`; the optimized video and poster are stored in `src/search_engine/static/`. A still poster is used when the browser requests reduced motion.
-
 Install the app dependencies and start the interface:
 
 ```bash

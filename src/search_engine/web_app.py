@@ -28,45 +28,20 @@ PURPLE_THEME = """
     --search-muted: #b8adc5;
 }
 
-html,
-body {
-    background: var(--search-bg) !important;
-}
-
 .stApp {
-    position: relative;
-    isolation: isolate;
-    background: transparent !important;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(91, 37, 132, 0.19), transparent 42%),
+        var(--search-bg);
     color: var(--search-text);
 }
 
-[data-testid="stAppViewContainer"],
-[data-testid="stMain"],
-[data-testid="stMainBlockContainer"] {
-    background: transparent !important;
-}
-
-#site-background {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    width: 100vw;
-    height: 100vh;
-    border: 0;
-    object-fit: cover;
-    object-position: center 54%;
-    pointer-events: none;
-    filter: brightness(0.48) saturate(0.9);
-}
-
 [data-testid="stHeader"] {
-    background: rgba(9, 8, 15, 0.34);
+    background: rgba(9, 8, 15, 0.78);
 }
 
 [data-testid="stSidebar"] {
-    background: rgba(21, 18, 30, 0.9);
+    background: var(--search-sidebar);
     border-right: 1px solid rgba(184, 107, 255, 0.12);
-    backdrop-filter: blur(12px);
 }
 
 [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
@@ -276,10 +251,6 @@ body {
     .search-features {
         justify-content: flex-start;
     }
-
-    #site-background {
-        object-position: center center;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -288,14 +259,6 @@ body {
     *::after {
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
-    }
-
-    #site-background {
-        display: none;
-    }
-
-    .stApp {
-        background: var(--search-bg) url("/app/static/purple-desert-poster.jpg") center / cover fixed no-repeat !important;
     }
 }
 </style>
@@ -431,28 +394,6 @@ def _render_hero() -> None:
     )
 
 
-BACKGROUND_VIDEO_HTML = """
-<video
-    id="site-background"
-    autoplay
-    muted
-    loop
-    playsinline
-    webkit-playsinline
-    preload="auto"
-    poster="/app/static/purple-desert-poster.jpg"
-    aria-hidden="true"
-    tabindex="-1"
->
-    <source src="/app/static/purple-desert.mp4" type="video/mp4">
-</video>
-"""
-
-
-def _render_background_video() -> None:
-    st.html(BACKGROUND_VIDEO_HTML)
-
-
 def main() -> None:
     st.set_page_config(
         page_title="MugdhoAI Search Engine",
@@ -461,7 +402,6 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(PURPLE_THEME, unsafe_allow_html=True)
-    _render_background_video()
 
     if "engine" not in st.session_state:
         engine, load_error = _initial_engine()

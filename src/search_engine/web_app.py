@@ -405,14 +405,27 @@ def main() -> None:
     st.markdown(PURPLE_THEME, unsafe_allow_html=True)
 
     # Google Analytics for the Search Engine property (Measurement ID G-T77KFCRW0J).
+    # The tag is injected into the parent page head: a script that stays inside
+    # this component iframe cannot measure the app itself.
     components.html(
         """
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-T77KFCRW0J"></script>
         <script>
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-T77KFCRW0J');
+          (function () {
+            var doc = window.parent.document;
+            if (!doc.getElementById('ga-gtag-js')) {
+              var s = doc.createElement('script');
+              s.id = 'ga-gtag-js';
+              s.async = true;
+              s.src = 'https://www.googletagmanager.com/gtag/js?id=G-T77KFCRW0J';
+              doc.head.appendChild(s);
+              var inline = doc.createElement('script');
+              inline.text = "window.dataLayer = window.dataLayer || [];"
+                + "function gtag(){dataLayer.push(arguments);}"
+                + "gtag('js', new Date());"
+                + "gtag('config', 'G-T77KFCRW0J');";
+              doc.head.appendChild(inline);
+            }
+          })();
         </script>
         """,
         height=0,

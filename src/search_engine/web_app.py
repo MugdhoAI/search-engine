@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from search_engine import query_assist
 from search_engine.engine import SearchEngine
@@ -402,6 +403,20 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     st.markdown(PURPLE_THEME, unsafe_allow_html=True)
+
+    # Google Analytics for the Search Engine property (Measurement ID G-T77KFCRW0J).
+    components.html(
+        """
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-T77KFCRW0J"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-T77KFCRW0J');
+        </script>
+        """,
+        height=0,
+    )
 
     if "engine" not in st.session_state:
         engine, load_error = _initial_engine()

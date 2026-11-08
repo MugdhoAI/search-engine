@@ -4,6 +4,7 @@
       <stop stop-color="#070D16"/><stop offset="1" stop-color="#0A141F"/>
     </linearGradient>
   </defs>
+  <clipPath id="qclip"><rect x="748" y="168" width="598.5" height="40"><animate attributeName="width" values="399;399;409.5;420;430.5;441;451.5;462;472.5;483;493.5;504;514.5;525;535.5;546;556.5;567;577.5;588;598.5;598.5" keyTimes="0;0.08;0.0979;0.1158;0.1337;0.1516;0.1695;0.1874;0.2053;0.2232;0.2411;0.2589;0.2768;0.2947;0.3126;0.3305;0.3484;0.3663;0.3842;0.4021;0.42;1" calcMode="discrete" dur="12s" repeatCount="indefinite"/></rect></clipPath>
   <rect width="1600" height="520" rx="20" fill="url(#bg2i)"/>
   <rect x="1" y="1" width="1598" height="518" rx="19" stroke="#22364A" stroke-opacity=".8"/>
 
@@ -37,21 +38,38 @@
   </g>
   <text x="1114" y="118" fill="#5C7186" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" text-anchor="middle">zsh — search-engine</text>
 
-  <!-- Command, with block cursor -->
+  <!-- Command: query types in, cursor tracks the typing point -->
   <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="17.5">
+    <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.02;0.93;0.99;1" dur="12s" repeatCount="indefinite"/>
     <text x="724" y="192" fill="#58D5F7" font-weight="700">$</text>
-    <text x="748" y="192" fill="#E6F0F8">search-engine examples/documents.json <tspan fill="#9ADCF5">"python AND search"</tspan><tspan fill="#58D5F7"> ▌</tspan></text>
+    <text x="748" y="192" fill="#E6F0F8" clip-path="url(#qclip)">search-engine examples/documents.json <tspan fill="#9ADCF5">"python AND search"</tspan></text>
+    <rect x="1147" y="176" width="9" height="20" rx="1" fill="#58D5F7" transform="translate(199.5 0)">
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 0;10.5 0;21 0;31.5 0;42 0;52.5 0;63 0;73.5 0;84 0;94.5 0;105 0;115.5 0;126 0;136.5 0;147 0;157.5 0;168 0;178.5 0;189 0;199.5 0;199.5 0" keyTimes="0;0.08;0.0979;0.1158;0.1337;0.1516;0.1695;0.1874;0.2053;0.2232;0.2411;0.2589;0.2768;0.2947;0.3126;0.3305;0.3484;0.3663;0.3842;0.4021;0.42;1" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1;1;0;1;0;1;1" keyTimes="0;0.03;0.06;0.08;0.50;0.56;0.62;0.68;1" calcMode="discrete" dur="12s" repeatCount="indefinite"/>
+    </rect>
   </g>
 
   <!-- Results: full, untruncated real output, aligned columns -->
-  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="15">
+  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="15" opacity="1" transform="translate(0 0)">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.50;0.56;0.93;0.99;1" dur="12s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0 8;0 8;0 0;0 0;0 8;0 8" keyTimes="0;0.50;0.56;0.93;0.99;1" dur="12s" repeatCount="indefinite"/>
     <text x="724" y="252" fill="#9ADCF5">0.251804</text>
     <text x="828" y="252" fill="#E6F0F8">1</text>
     <text x="862" y="252" fill="#E6F0F8">Python is a programming language designed for readable software.</text>
+  </g>
+  <g font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="15" opacity="1" transform="translate(0 0)">
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;0.58;0.64;0.93;0.99;1" dur="12s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0 8;0 8;0 0;0 0;0 8;0 8" keyTimes="0;0.58;0.64;0.93;0.99;1" dur="12s" repeatCount="indefinite"/>
     <text x="724" y="298" fill="#9ADCF5">0.251804</text>
     <text x="828" y="298" fill="#E6F0F8">4</text>
     <text x="862" y="298" fill="#E6F0F8">Python can be used to build search systems.</text>
   </g>
+  <!-- Scan highlight: one quiet pass over the results -->
+  <rect x="724" y="230" width="780" height="48" rx="6" fill="#58D5F7" opacity="0" transform="translate(0 0)">
+    <animate attributeName="opacity" values="0;0;0.09;0.09;0;0" keyTimes="0;0.68;0.71;0.78;0.81;1" dur="12s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 48;0 48;0 48" keyTimes="0;0.68;0.80;0.81;1" dur="12s" repeatCount="indefinite"/>
+  </rect>
+
 
   <!-- Terminal footer: the detail hidden in the numbers -->
   <path d="M724 356H1504" stroke="#162636"/>

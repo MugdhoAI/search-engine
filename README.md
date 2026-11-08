@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/search-engine-hero.svg" alt="Search Engine: an information retrieval pipeline from source documents through an inverted index to ranked results" width="100%">
+  <img src="assets/search-engine-hero.svg?v=2" alt="Search Engine: an information retrieval pipeline from source documents through an inverted index to ranked results" width="100%">
 </p>
 
 <h1 align="center">MugdhoAI / <a href="https://github.com/MugdhoAI/search-engine">search-engine</a></h1>
